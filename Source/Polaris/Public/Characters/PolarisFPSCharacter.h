@@ -6,7 +6,6 @@
 #include "GameFramework/Character.h"
 #include "PolarisFPSCharacter.generated.h"
 
-class USpringArmComponent;
 class UCameraComponent;
 
 UCLASS()
@@ -20,24 +19,16 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 protected:
+	// First-person camera
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	UCameraComponent* FirstPersonCamera;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
-	class USpringArmComponent* CameraBoom;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
-	class UCameraComponent* FollowCamera;
-
-protected:
-
+	// Movement functions
 	void MoveForward(float AxisValue);
-
 	void MoveRight(float AxisValue);
-
 };
