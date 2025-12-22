@@ -18,12 +18,6 @@ APolarisFPSCharacter::APolarisFPSCharacter()
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(CameraBoom);
-}
-
-// Called when the game starts or when spawned
-void APolarisFPSCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-	
+	Camera->bUsePawnControlRotation = true;
 }
 
