@@ -6,30 +6,83 @@
 // Sets default values
 AVS_SnowmobilePawn::AVS_SnowmobilePawn()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.TickGroup = TG_PrePhysics;
 
-    // create components
-        // RBB component as root
-    RBBComponent = CreateDefaultSubobject<AVS_Snowmobile_RBB_Component>(TEXT("RBBComponent"));
-    RootComponent = RBBComponent->GetRootComponent();
-        // movement component
-    MovementComponent = CreateDefaultSubobject<UCharacterMovementComponent>(TEXT("MovementComponent"));
-    MovementComponent->UpdatedComponent = RBBComponent->GetRootComponent();
-        // ski components
-    LeftSkiComponent = CreateDefaultSubobject<UVS_SkiPrimitiveComponent>(TEXT("LeftSkiComponent"));
-    LeftSkiComponent->SetupAttachment(RBBComponent->GetRootComponent());
-    RightSkiComponent = CreateDefaultSubobject<UVS_SkiPrimitiveComponent>(TEXT("RightSkiComponent"));
-    RightSkiComponent->SetupAttachment(RBBComponent->GetRootComponent());
-        // track component
-    TrackComponent = CreateDefaultSubobject<UVS_TrackPrimitiveComponent>(TEXT("TrackComponent"));
-    TrackComponent->SetupAttachment(RBBComponent->GetRootComponent());
+    // Create components and set up attachment hierarchy
+    ChassisComponent = CreateDefaultSubobject<UVS_ChassisStaticMeshComponent>(TEXT("ChassisComponent"));
+    RootComponent = ChassisComponent;
+
+    // Chassis mesh (physics body)
+    ChassisMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ChassisMesh"));
+    ChassisMesh->SetupAttachment(ChassisComponent);
+    ChassisMesh->SetSimulatePhysics(true);
+    ChassisMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    ChassisMesh->SetCollisionObjectType(ECC_PhysicsBody);
+    ChassisMesh->SetCollisionResponseToAllChannels(ECR_Block);
+    ChassisMesh->SetMobility(EComponentMobility::Movable);
+
+    // Ski mesh and collision
+    SkiMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SkiMesh"));
+    SkiMesh->SetupAttachment(ChassisComponent);
+    SkiMesh->SetSimulatePhysics(true);
+
+    SkiCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("SkiCollision"));
+    SkiCollision->SetupAttachment(SkiMesh);
+    SkiCollision->SetBoxExtent(SkiCollisionExtent);
+    SkiCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    SkiCollision->SetGenerateOverlapEvents(true);
+
+    // Track mesh and collision
+    TrackMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TrackMesh"));
+    TrackMesh->SetupAttachment(ChassisComponent);
+    TrackMesh->SetSimulatePhysics(true);
+
+    TrackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("TrackCollision"));
+    TrackCollision->SetupAttachment(TrackMesh);
+    TrackCollision->SetBoxExtent(TrackCollisionExtent);
+    TrackCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    TrackCollision->SetGenerateOverlapEvents(true);
+
+    // Components for skis and track
+    LeftSkiComponent = CreateDefaultSubobject<UVS_SkiSceneComponent>(TEXT("LeftSkiComponent"));
+    LeftSkiComponent->SetupAttachment(ChassisComponent);
+
+    RightSkiComponent = CreateDefaultSubobject<UVS_SkiSceneComponent>(TEXT("RightSkiComponent"));
+    RightSkiComponent->SetupAttachment(ChassisComponent);
+
+    TrackComponent = CreateDefaultSubobject<UVS_TrackSceneComponent>(TEXT("TrackComponent"));
+    TrackComponent->SetupAttachment(ChassisComponent);
 }
 
 // Called when the game starts or when spawned
 void AVS_SnowmobilePawn::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
+
+    // Set up component references
+    if (ChassisComponent)
+        ChassisComponent->ChassisMesh = ChassisMesh;
+
+    if (LeftSkiComponent)
+    {
+        LeftSkiComponent->Chassis = ChassisComponent;
+        LeftSkiComponent->SkiMesh = SkiMesh;
+        LeftSkiComponent->SkiCollision = SkiCollision;
+    }
+
+    if (RightSkiComponent)
+    {
+        RightSkiComponent->Chassis = ChassisComponent;
+        RightSkiComponent->SkiMesh = SkiMesh;
+        RightSkiComponent->SkiCollision = SkiCollision;
+    }
+
+    if (TrackComponent)
+    {
+        TrackComponent->TrackMesh = TrackMesh;
+        TrackComponent->TrackCollision = TrackCollision;
+    }
 }
 
 // Called every frame
@@ -51,16 +104,37 @@ void AVS_SnowmobilePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 void AVS_SnowmobilePawn::Accelerate(float Value)
 {
-    AddMovementInput(GetActorForwardVector(), Value);
+    if (FMath::Abs(Value) <= KINDA_SMALL_NUMBER || !ChassisComponent)
+        return;
+
+    const FVector Force = GetActorForwardVector() * Value * ChassisComponent->ForceMultiplier;
+    if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(ChassisComponent))
+        Primitive->AddForce(Force, NAME_None, true);
 }
 
 void AVS_SnowmobilePawn::Steer(float Value)
 {
-    AddActorLocalRotation(FRotator(0, Value, 0));
+    if (FMath::Abs(Value) <= KINDA_SMALL_NUMBER || !ChassisComponent)
+        return;
+
+    const FVector Torque = FVector(0.f, 0.f, Value * ChassisComponent->TorqueMultiplier);
+    if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(ChassisComponent))
+        Primitive->AddTorqueInRadians(Torque, NAME_None, true);
 }
 
 void AVS_SnowmobilePawn::Brake(float Value)
 {
-    AddMovementInput(GetActorForwardVector(), -Value);
+    if (FMath::Abs(Value) <= KINDA_SMALL_NUMBER || !ChassisComponent)
+        return;
+
+    if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(ChassisComponent))
+    {
+        const FVector CurrentVelocity = Primitive->GetPhysicsLinearVelocity();
+        if (!CurrentVelocity.IsNearlyZero())
+        {
+            const FVector BrakeForce = -CurrentVelocity.GetSafeNormal() * Value * ChassisComponent->ForceMultiplier;
+            Primitive->AddForce(BrakeForce, NAME_None, true);
+        }
+    }
 }
 

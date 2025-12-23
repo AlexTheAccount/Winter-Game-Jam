@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "VS_SkiPrimitiveComponent.h"
-#include "VS_TrackPrimitiveComponent.h"
-#include "VS_Snowmobile_RBB_Component.h"
+#include "VS_SkiSceneComponent.h"
+#include "VS_TrackSceneComponent.h"
+#include "VS_ChassisStaticMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "VS_SnowmobilePawn.generated.h"
@@ -29,29 +29,42 @@ protected:
     void Steer(float Value);
     void Brake(float Value);
 
-    // components
+    // Components
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    UCharacterMovementComponent* MovementComponent;
-
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    AVS_Snowmobile_RBB_Component* RBBComponent;
+    UVS_ChassisStaticMeshComponent* ChassisComponent = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    UVS_SkiPrimitiveComponent* LeftSkiComponent;
+    UStaticMeshComponent* ChassisMesh = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    UVS_SkiPrimitiveComponent* RightSkiComponent;
+    UStaticMeshComponent* SkiMesh = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    UVS_TrackPrimitiveComponent* TrackComponent;
+    UBoxComponent* SkiCollision = nullptr;
 
-public:	
-	// Called every frame
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UStaticMeshComponent* TrackMesh = nullptr;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UBoxComponent* TrackCollision = nullptr;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UVS_SkiSceneComponent* LeftSkiComponent = nullptr;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UVS_SkiSceneComponent* RightSkiComponent = nullptr;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UVS_TrackSceneComponent* TrackComponent = nullptr;
+
+    // Collision Extents
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+    FVector SkiCollisionExtent = FVector(50.f, 10.f, 5.f);
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+    FVector TrackCollisionExtent = FVector(50.f, 10.f, 5.f);
+
+public:
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-
 };
