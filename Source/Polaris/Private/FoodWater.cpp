@@ -22,6 +22,7 @@ void UFoodWater::CalculateAppetite(float _DeltaTime)
 	Hunger = FMath::Clamp(Hunger, 0, MaxHunger);
 	Thirst = FMath::Clamp(Thirst, 0, MaxThirst);
 
+	OnAppetite.Broadcast(Hunger, Thirst);
 
 
 	if (GEngine)
@@ -40,7 +41,7 @@ void UFoodWater::DecreaseHunger(float _PercentToDecrease)
 	
 	Hunger = FMath::Clamp(Hunger, 0, MaxHunger);
 	
-
+	OnAppetite.Broadcast(Hunger, Thirst);
 	if (GEngine)
 	GEngine->AddOnScreenDebugMessage(
 		-1,
@@ -57,7 +58,7 @@ void UFoodWater::IncreaseHunger(float _PercentToIncrease)
 	Hunger += (MaxHunger * _PercentToIncrease / 100.0f);
 
 	Hunger = FMath::Clamp(Hunger, 0, MaxHunger);
-
+	OnAppetite.Broadcast(Hunger, Thirst);
 	if (GEngine)
 		GEngine->AddOnScreenDebugMessage(
 			-1,
@@ -72,7 +73,7 @@ void UFoodWater::DecreaseThirst(float _PercentToDecrease)
 	Thirst -= (MaxThirst * _PercentToDecrease / 100.0f);
 
 	Thirst = FMath::Clamp(Thirst, 0, MaxThirst);
-
+	OnAppetite.Broadcast(Hunger, Thirst);
 	if (GEngine)
 		GEngine->AddOnScreenDebugMessage(
 			-1,
@@ -88,7 +89,7 @@ void UFoodWater::IncreaseThirst(float _PercentToIncrease)
 	Thirst += (MaxThirst * _PercentToIncrease / 100.0f);
 	
 	Thirst = FMath::Clamp(Thirst, 0, MaxThirst);
-
+	OnAppetite.Broadcast(Hunger, Thirst);
 	if (GEngine)
 		GEngine->AddOnScreenDebugMessage(
 			-1,

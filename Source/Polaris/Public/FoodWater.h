@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "FoodWater.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FCastAppetite, float, NewHunger, float, NewThirst);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class POLARIS_API UFoodWater : public UActorComponent
@@ -16,6 +17,9 @@ class POLARIS_API UFoodWater : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UFoodWater();
+
+	UPROPERTY(BlueprintAssignable)
+	FCastAppetite OnAppetite;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VALUE")
 	float MaxHunger = 100.0f;
