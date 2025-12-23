@@ -34,10 +34,10 @@ public:
 	float Thirst = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VALUE")
-	float HungerMult = 0.001f;
+	float HungerMult = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VALUE")
-	float ThirstMult = 0.001f;
+	float ThirstMult = 0.1f;
 
 	UFUNCTION(BlueprintCallable)
 	void CalculateAppetite(float _DeltaTime);
