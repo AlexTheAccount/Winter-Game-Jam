@@ -17,6 +17,14 @@ class POLARIS_API APolarisFPSCharacter : public ACharacter
 public:
 	APolarisFPSCharacter();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MaxHealth = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Health = MaxHealth;
+
+
+
 protected:	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

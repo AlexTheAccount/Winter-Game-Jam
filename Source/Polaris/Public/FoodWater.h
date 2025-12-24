@@ -8,6 +8,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FCastAppetite, float, NewHunger, float, NewThirst);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCastStarving, float, damage);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class POLARIS_API UFoodWater : public UActorComponent
 {
@@ -20,6 +22,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FCastAppetite OnAppetite;
+
+	UPROPERTY(BlueprintAssignable)
+	FCastStarving OnStarving;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VALUE")
 	float MaxHunger = 100.0f;
@@ -38,6 +43,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VALUE")
 	float ThirstMult = 0.001f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VALUE")
+	float TimePerStarveTick = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VALUE")
+	float TimeSinceLastStarveTick = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VALUE")
+	float StarveTickDamage = 5.0f;
 
 	UFUNCTION(BlueprintCallable)
 	void CalculateAppetite(float _DeltaTime);

@@ -25,13 +25,17 @@ void UFoodWater::CalculateAppetite(float _DeltaTime)
 	OnAppetite.Broadcast(Hunger, Thirst);
 
 
-	if (GEngine)
-	GEngine->AddOnScreenDebugMessage(
-		-1,
-		2.0f,
-		FColor::Cyan,
-		FString::Printf(TEXT("Hunger: %f | Thirst: %f"), Hunger, Thirst)
-	);
+	if (Hunger >= MaxHunger)
+	{
+		TimeSinceLastStarveTick += _DeltaTime;
+	}
+
+	if (TimeSinceLastStarveTick >= TimePerStarveTick)
+	{
+		OnStarving.Broadcast(StarveTickDamage);
+		TimeSinceLastStarveTick = 0;
+	}
+	
 
 }
 
@@ -42,13 +46,7 @@ void UFoodWater::DecreaseHunger(float _PercentToDecrease)
 	Hunger = FMath::Clamp(Hunger, 0, MaxHunger);
 	
 	OnAppetite.Broadcast(Hunger, Thirst);
-	if (GEngine)
-	GEngine->AddOnScreenDebugMessage(
-		-1,
-		2.0f,
-		FColor::Red,
-		FString::Printf(TEXT("Hunger: %f | Thirst: %f"), Hunger, Thirst)
-	);
+
 
 
 }
@@ -59,13 +57,7 @@ void UFoodWater::IncreaseHunger(float _PercentToIncrease)
 
 	Hunger = FMath::Clamp(Hunger, 0, MaxHunger);
 	OnAppetite.Broadcast(Hunger, Thirst);
-	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			2.0f,
-			FColor::Red,
-			FString::Printf(TEXT("Hunger: %f | Thirst: %f"), Hunger, Thirst)
-		);
+
 }
 
 void UFoodWater::DecreaseThirst(float _PercentToDecrease)
@@ -74,13 +66,7 @@ void UFoodWater::DecreaseThirst(float _PercentToDecrease)
 
 	Thirst = FMath::Clamp(Thirst, 0, MaxThirst);
 	OnAppetite.Broadcast(Hunger, Thirst);
-	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			2.0f,
-			FColor::Red,
-			FString::Printf(TEXT("Hunger: %f | Thirst: %f"), Hunger, Thirst)
-		);
+
 
 }
 
@@ -90,13 +76,7 @@ void UFoodWater::IncreaseThirst(float _PercentToIncrease)
 	
 	Thirst = FMath::Clamp(Thirst, 0, MaxThirst);
 	OnAppetite.Broadcast(Hunger, Thirst);
-	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			2.0f,
-			FColor::Red,
-			FString::Printf(TEXT("Hunger: %f | Thirst: %f"), Hunger, Thirst)
-		);
+
 }
 
 // Called when the game starts
