@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SkiSceneComponent.h"
+#include "Polaris/Public/Snowmobile/SkiSceneComponent.h"
 
 USkiSceneComponent::USkiSceneComponent()
 {

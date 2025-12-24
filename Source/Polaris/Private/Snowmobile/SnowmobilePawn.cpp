@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SnowmobilePawn.h"
+#include "Polaris/Public/Snowmobile/SnowmobilePawn.h"
 
 // Sets default values
 ASnowmobilePawn::ASnowmobilePawn()

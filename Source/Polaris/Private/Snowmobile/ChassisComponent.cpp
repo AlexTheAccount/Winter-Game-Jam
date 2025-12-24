@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ChassisComponent.h"
+#include "Polaris/Public/Snowmobile/ChassisComponent.h"
 
 UChassisComponent::UChassisComponent()
 {
