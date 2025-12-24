@@ -13,7 +13,7 @@ void UVS_SkiSceneComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    if (!Chassis || !Chassis->ChassisMesh || !SkiMesh)
+    if (!Chassis || !SkiMesh)
         return;
 
 
@@ -39,7 +39,7 @@ void UVS_SkiSceneComponent::ApplySkiForces(const FHitResult& Hit)
     float Compression = FMath::Clamp(RestLength - Hit.Distance, 0.0f, RestLength);
 
     // normal force scalar from spring/damper (chassis velocity projected on normal for damping)
-    float RelativeVelocity = FVector::DotProduct(Chassis->ChassisMesh->GetComponentVelocity(), Hit.Normal);
+    float RelativeVelocity = FVector::DotProduct(Chassis->GetComponentVelocity(), Hit.Normal);
     float NormalScalar = SpringStiffness * Compression - DampingCoefficient * RelativeVelocity;
     NormalScalar = FMath::Max(0.0f, NormalScalar); // normal force cannot pull
 
@@ -61,7 +61,7 @@ void UVS_SkiSceneComponent::ApplySkiForces(const FHitResult& Hit)
         ForwardOnPlane = ForwardOnPlane.GetSafeNormal();
 
         // longitudinal speed and velocity vector
-        FVector ChassisVel = Chassis->ChassisMesh->GetComponentVelocity();
+        FVector ChassisVel = Chassis->GetComponentVelocity();
         float ForwardSpeed = FVector::DotProduct(ChassisVel, ForwardOnPlane);
         FVector LongitudinalVel = ForwardOnPlane * ForwardSpeed;
 
@@ -88,19 +88,19 @@ void UVS_SkiSceneComponent::ApplySkiForces(const FHitResult& Hit)
         FVector LongitudinalFriction = Force;
 
         // apply forces at contact point
-        Chassis->ChassisMesh->AddForceAtLocation(NormalForce + LateralFriction + LongitudinalFriction, Hit.ImpactPoint);
+        Chassis->AddForceAtLocation(NormalForce + LateralFriction + LongitudinalFriction, Hit.ImpactPoint);
     }
     else // just apply normal and lateral
-        Chassis->ChassisMesh->AddForceAtLocation(NormalForce + LateralFriction, Hit.ImpactPoint);
+        Chassis->AddForceAtLocation(NormalForce + LateralFriction, Hit.ImpactPoint);
 }
 
 FVector UVS_SkiSceneComponent::ComputeLateralVelocity(const FHitResult& Hit) const
 {
-    if (!Chassis || !Chassis->ChassisMesh)
+    if (!Chassis)
         return FVector::ZeroVector;
 
     // Get the velocity of the chassis mesh at the impact point
-    FVector Velocity = Chassis->ChassisMesh->GetComponentVelocity();
+    FVector Velocity = Chassis->GetComponentVelocity();
 
     // keep only lateral
     FVector Normal = Hit.Normal.GetSafeNormal();

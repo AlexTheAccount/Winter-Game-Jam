@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include <Components/BoxComponent.h>
 #include "Components/SceneComponent.h"
-#include "VS_ChassisStaticMeshComponent.h"
+#include "VS_ChassisComponent.h"
 #include "VS_SkiSceneComponent.generated.h"
 
 /**
@@ -23,7 +23,7 @@ public:
 
     // Snowmobile chassis reference
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
-    UVS_ChassisStaticMeshComponent* Chassis;
+    UVS_ChassisComponent* Chassis;
 
     // Ski mesh and collision (set by pawn)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")

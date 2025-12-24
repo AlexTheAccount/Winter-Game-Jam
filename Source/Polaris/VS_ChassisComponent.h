@@ -3,23 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PhysicsEngine/RigidBodyBase.h"
-#include "VS_ChassisStaticMeshComponent.generated.h"
+#include <Components/StaticMeshComponent.h>
+#include "VS_ChassisComponent.generated.h"
 
 /**
  * 
  */
 UCLASS(ClassGroup = "Snowmobile", meta = (BlueprintSpawnableComponent))
-class POLARIS_API UVS_ChassisStaticMeshComponent : public UStaticMeshComponent
+class POLARIS_API UVS_ChassisComponent : public UStaticMeshComponent
 {
 	GENERATED_BODY()
 
 public:
-    UVS_ChassisStaticMeshComponent();
+    UVS_ChassisComponent();
 
-    // mesh component used as the physics body for the chassis (set by pawn)
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
-    UStaticMeshComponent* ChassisMesh;
+    // fuel amount
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")
+    float Fuel = 500.0f;
 
     // multipliers for forces and torques
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")

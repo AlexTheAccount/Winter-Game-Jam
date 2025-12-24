@@ -10,39 +10,20 @@ AVS_SnowmobilePawn::AVS_SnowmobilePawn()
     PrimaryActorTick.TickGroup = TG_PrePhysics;
 
     // Create components and set up attachment hierarchy
-    ChassisComponent = CreateDefaultSubobject<UVS_ChassisStaticMeshComponent>(TEXT("ChassisComponent"));
-    RootComponent = ChassisComponent;
 
-    // Chassis mesh (physics body)
-    ChassisMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ChassisMesh"));
-    ChassisMesh->SetupAttachment(ChassisComponent);
-    ChassisMesh->SetSimulatePhysics(true);
-    ChassisMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    ChassisMesh->SetCollisionObjectType(ECC_PhysicsBody);
-    ChassisMesh->SetCollisionResponseToAllChannels(ECR_Block);
-    ChassisMesh->SetMobility(EComponentMobility::Movable);
+    // Root
+    RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+    RootComponent = RootSceneComponent;
 
-    // Ski mesh and collision
-    SkiMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SkiMesh"));
-    SkiMesh->SetupAttachment(ChassisComponent);
-    SkiMesh->SetSimulatePhysics(true);
+    // Chassis and collision
+    ChassisComponent = CreateDefaultSubobject<UVS_ChassisComponent>(TEXT("ChassisComponent"));
+    ChassisComponent->SetupAttachment(RootSceneComponent);
 
-    SkiCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("SkiCollision"));
-    SkiCollision->SetupAttachment(SkiMesh);
-    SkiCollision->SetBoxExtent(SkiCollisionExtent);
-    SkiCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    SkiCollision->SetGenerateOverlapEvents(true);
-
-    // Track mesh and collision
-    TrackMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TrackMesh"));
-    TrackMesh->SetupAttachment(ChassisComponent);
-    TrackMesh->SetSimulatePhysics(true);
-
-    TrackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("TrackCollision"));
-    TrackCollision->SetupAttachment(TrackMesh);
-    TrackCollision->SetBoxExtent(TrackCollisionExtent);
-    TrackCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    TrackCollision->SetGenerateOverlapEvents(true);
+    ChassisCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("ChassisCollision"));
+    ChassisCollision->SetupAttachment(ChassisComponent);
+    ChassisCollision->SetBoxExtent(ChassisCollisionExtent);
+    ChassisCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    ChassisCollision->SetSimulatePhysics(true);
 
     // Components for skis and track
     LeftSkiComponent = CreateDefaultSubobject<UVS_SkiSceneComponent>(TEXT("LeftSkiComponent"));
@@ -53,6 +34,39 @@ AVS_SnowmobilePawn::AVS_SnowmobilePawn()
 
     TrackComponent = CreateDefaultSubobject<UVS_TrackSceneComponent>(TEXT("TrackComponent"));
     TrackComponent->SetupAttachment(ChassisComponent);
+
+    // Left Ski mesh and collision
+    LeftSkiMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftSkiMesh"));
+    LeftSkiMesh->SetupAttachment(LeftSkiComponent);
+    LeftSkiMesh->SetSimulatePhysics(true);
+
+    LeftSkiCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftSkiCollision"));
+    LeftSkiCollision->SetupAttachment(LeftSkiMesh);
+    LeftSkiCollision->SetBoxExtent(SkiCollisionExtent);
+    LeftSkiCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    LeftSkiCollision->SetGenerateOverlapEvents(true);
+
+    // Right Ski mesh and collision
+    RightSkiMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RightSkiMesh"));
+    RightSkiMesh->SetupAttachment(RightSkiComponent);
+    RightSkiMesh->SetSimulatePhysics(true);
+
+    RightSkiCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RightSkiCollision"));
+    RightSkiCollision->SetupAttachment(RightSkiMesh);
+    RightSkiCollision->SetBoxExtent(SkiCollisionExtent);
+    RightSkiCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    RightSkiCollision->SetGenerateOverlapEvents(true);
+
+    // Track mesh and collision
+    TrackMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TrackMesh"));
+    TrackMesh->SetupAttachment(TrackComponent);
+    TrackMesh->SetSimulatePhysics(true);
+
+    TrackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("TrackCollision"));
+    TrackCollision->SetupAttachment(TrackMesh);
+    TrackCollision->SetBoxExtent(TrackCollisionExtent);
+    TrackCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    TrackCollision->SetGenerateOverlapEvents(true);
 }
 
 // Called when the game starts or when spawned
@@ -61,21 +75,18 @@ void AVS_SnowmobilePawn::BeginPlay()
     Super::BeginPlay();
 
     // Set up component references
-    if (ChassisComponent)
-        ChassisComponent->ChassisMesh = ChassisMesh;
-
     if (LeftSkiComponent)
     {
         LeftSkiComponent->Chassis = ChassisComponent;
-        LeftSkiComponent->SkiMesh = SkiMesh;
-        LeftSkiComponent->SkiCollision = SkiCollision;
+        LeftSkiComponent->SkiMesh = LeftSkiMesh;
+        LeftSkiComponent->SkiCollision = LeftSkiCollision;
     }
 
     if (RightSkiComponent)
     {
         RightSkiComponent->Chassis = ChassisComponent;
-        RightSkiComponent->SkiMesh = SkiMesh;
-        RightSkiComponent->SkiCollision = SkiCollision;
+        RightSkiComponent->SkiMesh = RightSkiMesh;
+        RightSkiComponent->SkiCollision = RightSkiCollision;
     }
 
     if (TrackComponent)
