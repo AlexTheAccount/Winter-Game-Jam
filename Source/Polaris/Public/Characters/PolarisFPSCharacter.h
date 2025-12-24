@@ -15,29 +15,21 @@ class POLARIS_API APolarisFPSCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	APolarisFPSCharacter();
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MaxHealth = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Health = MaxHealth;
 
 
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+protected:	
 
-protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UCameraComponent> Camera;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
-	class USpringArmComponent* CameraBoom;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
-	class UCameraComponent* FollowCamera;
-
-protected:
-
-	void MoveForward(float AxisValue);
-
-	void MoveRight(float AxisValue);
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<USpringArmComponent> CameraBoom;
 };
