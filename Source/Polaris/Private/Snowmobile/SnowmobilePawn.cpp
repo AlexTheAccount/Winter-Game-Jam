@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "VS_SnowmobilePawn.h"
+#include "SnowmobilePawn.h"
 
 // Sets default values
-AVS_SnowmobilePawn::AVS_SnowmobilePawn()
+ASnowmobilePawn::ASnowmobilePawn()
 {
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.TickGroup = TG_PrePhysics;
@@ -16,7 +16,7 @@ AVS_SnowmobilePawn::AVS_SnowmobilePawn()
     RootComponent = RootSceneComponent;
 
     // Chassis and collision
-    ChassisComponent = CreateDefaultSubobject<UVS_ChassisComponent>(TEXT("ChassisComponent"));
+    ChassisComponent = CreateDefaultSubobject<UChassisComponent>(TEXT("ChassisComponent"));
     ChassisComponent->SetupAttachment(RootSceneComponent);
 
     ChassisCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("ChassisCollision"));
@@ -26,13 +26,13 @@ AVS_SnowmobilePawn::AVS_SnowmobilePawn()
     ChassisCollision->SetSimulatePhysics(true);
 
     // Components for skis and track
-    LeftSkiComponent = CreateDefaultSubobject<UVS_SkiSceneComponent>(TEXT("LeftSkiComponent"));
+    LeftSkiComponent = CreateDefaultSubobject<USkiSceneComponent>(TEXT("LeftSkiComponent"));
     LeftSkiComponent->SetupAttachment(ChassisComponent);
 
-    RightSkiComponent = CreateDefaultSubobject<UVS_SkiSceneComponent>(TEXT("RightSkiComponent"));
+    RightSkiComponent = CreateDefaultSubobject<USkiSceneComponent>(TEXT("RightSkiComponent"));
     RightSkiComponent->SetupAttachment(ChassisComponent);
 
-    TrackComponent = CreateDefaultSubobject<UVS_TrackSceneComponent>(TEXT("TrackComponent"));
+    TrackComponent = CreateDefaultSubobject<UTrackSceneComponent>(TEXT("TrackComponent"));
     TrackComponent->SetupAttachment(ChassisComponent);
 
     // Left Ski mesh and collision
@@ -70,7 +70,7 @@ AVS_SnowmobilePawn::AVS_SnowmobilePawn()
 }
 
 // Called when the game starts or when spawned
-void AVS_SnowmobilePawn::BeginPlay()
+void ASnowmobilePawn::BeginPlay()
 {
     Super::BeginPlay();
 
@@ -97,23 +97,23 @@ void AVS_SnowmobilePawn::BeginPlay()
 }
 
 // Called every frame
-void AVS_SnowmobilePawn::Tick(float DeltaTime)
+void ASnowmobilePawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
 // Called to bind functionality to input
-void AVS_SnowmobilePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ASnowmobilePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
     // input bindings
-    PlayerInputComponent->BindAxis("Accelerate", this, &AVS_SnowmobilePawn::Accelerate);
-    PlayerInputComponent->BindAxis("Steer", this, &AVS_SnowmobilePawn::Steer);
-    PlayerInputComponent->BindAxis("Brake", this, &AVS_SnowmobilePawn::Brake);
+    PlayerInputComponent->BindAxis("Accelerate", this, &ASnowmobilePawn::Accelerate);
+    PlayerInputComponent->BindAxis("Steer", this, &ASnowmobilePawn::Steer);
+    PlayerInputComponent->BindAxis("Brake", this, &ASnowmobilePawn::Brake);
 }
 
-void AVS_SnowmobilePawn::Accelerate(float Value)
+void ASnowmobilePawn::Accelerate(float Value)
 {
     if (FMath::Abs(Value) <= KINDA_SMALL_NUMBER || !ChassisComponent)
         return;
@@ -123,7 +123,7 @@ void AVS_SnowmobilePawn::Accelerate(float Value)
         Primitive->AddForce(Force, NAME_None, true);
 }
 
-void AVS_SnowmobilePawn::Steer(float Value)
+void ASnowmobilePawn::Steer(float Value)
 {
     if (FMath::Abs(Value) <= KINDA_SMALL_NUMBER || !ChassisComponent)
         return;
@@ -133,7 +133,7 @@ void AVS_SnowmobilePawn::Steer(float Value)
         Primitive->AddTorqueInRadians(Torque, NAME_None, true);
 }
 
-void AVS_SnowmobilePawn::Brake(float Value)
+void ASnowmobilePawn::Brake(float Value)
 {
     if (FMath::Abs(Value) <= KINDA_SMALL_NUMBER || !ChassisComponent)
         return;

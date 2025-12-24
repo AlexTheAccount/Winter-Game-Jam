@@ -4,21 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "VS_SkiSceneComponent.h"
-#include "VS_TrackSceneComponent.h"
-#include "VS_ChassisComponent.h"
+#include "SkiSceneComponent.h"
+#include "TrackSceneComponent.h"
+#include "ChassisComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "VS_SnowmobilePawn.generated.h"
+#include "SnowmobilePawn.generated.h"
 
 UCLASS()
-class POLARIS_API AVS_SnowmobilePawn : public APawn
+class POLARIS_API ASnowmobilePawn : public APawn
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this pawn's properties
-	AVS_SnowmobilePawn();
+	ASnowmobilePawn();
 
 protected:
 	// Called when the game starts or when spawned
@@ -34,7 +34,7 @@ protected:
     USceneComponent* RootSceneComponent = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-    UVS_ChassisComponent* ChassisComponent = nullptr;
+    UChassisComponent* ChassisComponent = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
     UBoxComponent* ChassisCollision = nullptr;
@@ -58,13 +58,13 @@ protected:
     UBoxComponent* TrackCollision = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-    UVS_SkiSceneComponent* LeftSkiComponent = nullptr;
+    USkiSceneComponent* LeftSkiComponent = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-    UVS_SkiSceneComponent* RightSkiComponent = nullptr;
+    USkiSceneComponent* RightSkiComponent = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-    UVS_TrackSceneComponent* TrackComponent = nullptr;
+    UTrackSceneComponent* TrackComponent = nullptr;
 
     // Collision Extents
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")

@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include <Components/StaticMeshComponent.h>
-#include "VS_ChassisComponent.generated.h"
+#include "ChassisComponent.generated.h"
 
 /**
  * 
  */
 UCLASS(ClassGroup = "Snowmobile", meta = (BlueprintSpawnableComponent))
-class POLARIS_API UVS_ChassisComponent : public UStaticMeshComponent
+class POLARIS_API UChassisComponent : public UStaticMeshComponent
 {
 	GENERATED_BODY()
 
 public:
-    UVS_ChassisComponent();
+    UChassisComponent();
 
     // fuel amount
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")

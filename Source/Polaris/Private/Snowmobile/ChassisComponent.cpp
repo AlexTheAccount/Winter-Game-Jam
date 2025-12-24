@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "VS_ChassisComponent.h"
+#include "ChassisComponent.h"
 
-UVS_ChassisComponent::UVS_ChassisComponent()
+UChassisComponent::UChassisComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
 }

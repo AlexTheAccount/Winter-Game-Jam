@@ -1,15 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "VS_SkiSceneComponent.h"
+#include "SkiSceneComponent.h"
 
-UVS_SkiSceneComponent::UVS_SkiSceneComponent()
+USkiSceneComponent::USkiSceneComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.TickGroup = TG_PrePhysics;
 }
 
-void UVS_SkiSceneComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void USkiSceneComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -33,7 +33,7 @@ void UVS_SkiSceneComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
     }
 }
 
-void UVS_SkiSceneComponent::ApplySkiForces(const FHitResult& Hit)
+void USkiSceneComponent::ApplySkiForces(const FHitResult& Hit)
 {
     // compression (clamped to non-negative)
     float Compression = FMath::Clamp(RestLength - Hit.Distance, 0.0f, RestLength);
@@ -94,7 +94,7 @@ void UVS_SkiSceneComponent::ApplySkiForces(const FHitResult& Hit)
         Chassis->AddForceAtLocation(NormalForce + LateralFriction, Hit.ImpactPoint);
 }
 
-FVector UVS_SkiSceneComponent::ComputeLateralVelocity(const FHitResult& Hit) const
+FVector USkiSceneComponent::ComputeLateralVelocity(const FHitResult& Hit) const
 {
     if (!Chassis)
         return FVector::ZeroVector;

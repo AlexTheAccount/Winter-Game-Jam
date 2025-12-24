@@ -5,25 +5,25 @@
 #include "CoreMinimal.h"
 #include <Components/BoxComponent.h>
 #include "Components/SceneComponent.h"
-#include "VS_ChassisComponent.h"
-#include "VS_SkiSceneComponent.generated.h"
+#include "ChassisComponent.h"
+#include "SkiSceneComponent.generated.h"
 
 /**
  * 
  */
 UCLASS(ClassGroup = "Snowmobile", meta = (BlueprintSpawnableComponent))
-class POLARIS_API UVS_SkiSceneComponent : public USceneComponent
+class POLARIS_API USkiSceneComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
 public:
-    UVS_SkiSceneComponent();
+    USkiSceneComponent();
 
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     // Snowmobile chassis reference
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
-    UVS_ChassisComponent* Chassis;
+    UChassisComponent* Chassis;
 
     // Ski mesh and collision (set by pawn)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")

@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include <Components/BoxComponent.h>
 #include "Components/SceneComponent.h"
-#include "VS_TrackSceneComponent.generated.h"
+#include "TrackSceneComponent.generated.h"
 
 /**
  * 
  */
 UCLASS(ClassGroup = "Snowmobile", meta = (BlueprintSpawnableComponent))
-class POLARIS_API UVS_TrackSceneComponent : public USceneComponent
+class POLARIS_API UTrackSceneComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
@@ -24,7 +24,7 @@ protected:
 
 public:
     // Sets default values for this component's properties
-    UVS_TrackSceneComponent();
+    UTrackSceneComponent();
 
     // Track mesh and collision (set by pawn)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
