@@ -35,6 +35,8 @@ void UFoodWater::CalculateAppetite(float _DeltaTime)
 		OnStarving.Broadcast(StarveTickDamage);
 		TimeSinceLastStarveTick = 0;
 	}
+
+	Thirsty = (Thirst >= MaxThirst);
 	
 
 }
