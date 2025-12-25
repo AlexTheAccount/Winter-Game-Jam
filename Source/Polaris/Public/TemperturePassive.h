@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "TemperturePassive.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCastFreezing, float, damage);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class POLARIS_API UTemperturePassive : public UActorComponent
@@ -17,20 +18,26 @@ public:
 	// Sets default values for this component's properties
 	UTemperturePassive();
 
+	UPROPERTY(BlueprintAssignable)
+	FCastFreezing OnFreezingTick;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float EnviromentTemp = 50.0f;
+	float DefaultEnviromentTemp = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float EnviromentTemp = 30.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Insulation = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float FinalTemp = 0.0f;
+	float FinalTemp = 30.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float TransitionSpeed = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float FreezingTickTemp = 15.0f;
+	float FreezingTickTemp = 5.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float TimeSinceLastFreezingTick = 15.0f;

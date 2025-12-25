@@ -28,8 +28,14 @@ void UTemperturePassive::CalculateTemp(float _DeltaTime)
 	if (Freezing)
 	{
 		TimeSinceLastFreezingTick += _DeltaTime;
-		
+		if (TimeSinceLastFreezingTick >= TimePerFreezingTick)
+		{
+			OnFreezingTick.Broadcast(FreezingTickDamage);
+			TimeSinceLastFreezingTick = 0;
+		}
 	}
+
+	
 
 }
 
@@ -47,7 +53,7 @@ void UTemperturePassive::BeginPlay()
 void UTemperturePassive::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	CalculateTemp(DeltaTime);
 	// ...
 }
 
