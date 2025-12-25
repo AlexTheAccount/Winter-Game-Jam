@@ -2,6 +2,9 @@
 
 
 #include "Polaris/Public/Snowmobile/SnowmobilePawn.h"
+#include "Polaris/Public/Snowmobile/SkiSceneComponent.h"
+#include "Polaris/Public/Snowmobile/TrackSceneComponent.h"
+#include "Polaris/Public/Snowmobile/ChassisComponent.h"
 
 // Sets default values
 ASnowmobilePawn::ASnowmobilePawn()
@@ -11,11 +14,11 @@ ASnowmobilePawn::ASnowmobilePawn()
 
     // Create components and set up attachment hierarchy
 
-    // Root
+        // Root
     RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
     RootComponent = RootSceneComponent;
 
-    // Chassis and collision
+        // Chassis and collision
     ChassisComponent = CreateDefaultSubobject<UChassisComponent>(TEXT("ChassisComponent"));
     ChassisComponent->SetupAttachment(RootSceneComponent);
 
@@ -25,7 +28,7 @@ ASnowmobilePawn::ASnowmobilePawn()
     ChassisCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     ChassisCollision->SetSimulatePhysics(true);
 
-    // Components for skis and track
+        // Components for skis and track
     LeftSkiComponent = CreateDefaultSubobject<USkiSceneComponent>(TEXT("LeftSkiComponent"));
     LeftSkiComponent->SetupAttachment(ChassisComponent);
 
@@ -35,7 +38,7 @@ ASnowmobilePawn::ASnowmobilePawn()
     TrackComponent = CreateDefaultSubobject<UTrackSceneComponent>(TEXT("TrackComponent"));
     TrackComponent->SetupAttachment(ChassisComponent);
 
-    // Left Ski mesh and collision
+        // Left Ski mesh and collision
     LeftSkiMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftSkiMesh"));
     LeftSkiMesh->SetupAttachment(LeftSkiComponent);
     LeftSkiMesh->SetSimulatePhysics(true);
@@ -46,7 +49,7 @@ ASnowmobilePawn::ASnowmobilePawn()
     LeftSkiCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     LeftSkiCollision->SetGenerateOverlapEvents(true);
 
-    // Right Ski mesh and collision
+        // Right Ski mesh and collision
     RightSkiMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RightSkiMesh"));
     RightSkiMesh->SetupAttachment(RightSkiComponent);
     RightSkiMesh->SetSimulatePhysics(true);
@@ -57,7 +60,7 @@ ASnowmobilePawn::ASnowmobilePawn()
     RightSkiCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     RightSkiCollision->SetGenerateOverlapEvents(true);
 
-    // Track mesh and collision
+        // Track mesh and collision
     TrackMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TrackMesh"));
     TrackMesh->SetupAttachment(TrackComponent);
     TrackMesh->SetSimulatePhysics(true);
@@ -67,6 +70,9 @@ ASnowmobilePawn::ASnowmobilePawn()
     TrackCollision->SetBoxExtent(TrackCollisionExtent);
     TrackCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     TrackCollision->SetGenerateOverlapEvents(true);
+
+    // get references
+    PlayerController = Cast<APolarisPlayerController>(GetController());
 }
 
 // Called when the game starts or when spawned
@@ -111,6 +117,7 @@ void ASnowmobilePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
     PlayerInputComponent->BindAxis("Accelerate", this, &ASnowmobilePawn::Accelerate);
     PlayerInputComponent->BindAxis("Steer", this, &ASnowmobilePawn::Steer);
     PlayerInputComponent->BindAxis("Brake", this, &ASnowmobilePawn::Brake);
+    PlayerInputComponent->BindAxis("Dismount", this, &ASnowmobilePawn::Dismount);
 }
 
 void ASnowmobilePawn::Accelerate(float Value)
@@ -146,6 +153,14 @@ void ASnowmobilePawn::Brake(float Value)
             const FVector BrakeForce = -CurrentVelocity.GetSafeNormal() * Value * ChassisComponent->ForceMultiplier;
             Primitive->AddForce(BrakeForce, NAME_None, true);
         }
+    }
+}
+
+void ASnowmobilePawn::Dismount(float Value)
+{
+    if (Value > 0.5f && PlayerController)
+    {
+        PlayerController->UnPossess();
     }
 }
 

@@ -4,13 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "SkiSceneComponent.h"
-#include "TrackSceneComponent.h"
-#include "ChassisComponent.h"
+#include <Components/BoxComponent.h>
 #include "Components/StaticMeshComponent.h"
+#include <Player/PolarisPlayerController.h>
 #include "GameFramework/CharacterMovementComponent.h"
 #include "SnowmobilePawn.generated.h"
 
+class USkiSceneComponent;
+class UTrackSceneComponent;
+class UChassisComponent;
 UCLASS()
 class POLARIS_API ASnowmobilePawn : public APawn
 {
@@ -20,6 +22,10 @@ public:
 	// Sets default values for this pawn's properties
 	ASnowmobilePawn();
 
+    // References
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References", meta = (AllowPrivateAccess = "true"))
+    APolarisPlayerController* PlayerController = nullptr;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -28,6 +34,7 @@ protected:
     void Accelerate(float Value);
     void Steer(float Value);
     void Brake(float Value);
+    void Dismount(float Value);
 
     // Components
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))

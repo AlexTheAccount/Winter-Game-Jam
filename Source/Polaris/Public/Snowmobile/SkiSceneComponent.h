@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include <Components/BoxComponent.h>
 #include "Components/SceneComponent.h"
-#include "ChassisComponent.h"
 #include "SkiSceneComponent.generated.h"
 
+class UChassisComponent;
 /**
  * 
  */

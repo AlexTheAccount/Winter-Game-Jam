@@ -6,6 +6,7 @@
 #include <Components/StaticMeshComponent.h>
 #include "ChassisComponent.generated.h"
 
+class ASnowmobilePawn;
 /**
  * 
  */
@@ -17,6 +18,10 @@ class POLARIS_API UChassisComponent : public UStaticMeshComponent
 public:
     UChassisComponent();
 
+    // References (Set by Pawn)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
+    ASnowmobilePawn* SnowmobilePawn;
+
     // fuel amount
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")
     float Fuel = 500.0f;
@@ -27,4 +32,12 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")
     float TorqueMultiplier = 500000.0f;
+
+protected:
+    virtual void BeginPlay() override;
+
+    // collision handling
+    UFUNCTION()
+    void OnChassisHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+        UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
 };

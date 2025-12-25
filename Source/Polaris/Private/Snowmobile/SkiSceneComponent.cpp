@@ -2,6 +2,7 @@
 
 
 #include "Polaris/Public/Snowmobile/SkiSceneComponent.h"
+#include "Polaris/Public/Snowmobile/ChassisComponent.h"
 
 USkiSceneComponent::USkiSceneComponent()
 {
