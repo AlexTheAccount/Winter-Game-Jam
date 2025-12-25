@@ -17,7 +17,10 @@ class POLARIS_API APolarisFPSCharacter : public ACharacter
 public:
 	APolarisFPSCharacter();
 
-protected:	
+	virtual void Tick(float DeltaSeconds) override;
+
+protected:
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UCameraComponent> Camera;
