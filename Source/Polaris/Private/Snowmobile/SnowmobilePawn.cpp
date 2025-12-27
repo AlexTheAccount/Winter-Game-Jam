@@ -5,6 +5,10 @@
 #include "Polaris/Public/Snowmobile/SkiSceneComponent.h"
 #include "Polaris/Public/Snowmobile/TrackSceneComponent.h"
 #include "Polaris/Public/Snowmobile/ChassisComponent.h"
+#include "Polaris/Public/FoodWater.h"
+#include <Kismet/GameplayStatics.h>
+#include "EnhancedInputComponent.h"
+#include <EnhancedInputSubsystems.h>
 
 // Sets default values
 ASnowmobilePawn::ASnowmobilePawn()
@@ -21,12 +25,12 @@ ASnowmobilePawn::ASnowmobilePawn()
         // Chassis and collision
     ChassisComponent = CreateDefaultSubobject<UChassisComponent>(TEXT("ChassisComponent"));
     ChassisComponent->SetupAttachment(RootSceneComponent);
+    ChassisComponent->SetSimulatePhysics(true);
 
     ChassisCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("ChassisCollision"));
     ChassisCollision->SetupAttachment(ChassisComponent);
     ChassisCollision->SetBoxExtent(ChassisCollisionExtent);
     ChassisCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    ChassisCollision->SetSimulatePhysics(true);
 
         // Components for skis and track
     LeftSkiComponent = CreateDefaultSubobject<USkiSceneComponent>(TEXT("LeftSkiComponent"));
@@ -41,7 +45,6 @@ ASnowmobilePawn::ASnowmobilePawn()
         // Left Ski mesh and collision
     LeftSkiMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftSkiMesh"));
     LeftSkiMesh->SetupAttachment(LeftSkiComponent);
-    LeftSkiMesh->SetSimulatePhysics(true);
 
     LeftSkiCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftSkiCollision"));
     LeftSkiCollision->SetupAttachment(LeftSkiMesh);
@@ -52,7 +55,6 @@ ASnowmobilePawn::ASnowmobilePawn()
         // Right Ski mesh and collision
     RightSkiMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RightSkiMesh"));
     RightSkiMesh->SetupAttachment(RightSkiComponent);
-    RightSkiMesh->SetSimulatePhysics(true);
 
     RightSkiCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RightSkiCollision"));
     RightSkiCollision->SetupAttachment(RightSkiMesh);
@@ -63,16 +65,16 @@ ASnowmobilePawn::ASnowmobilePawn()
         // Track mesh and collision
     TrackMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TrackMesh"));
     TrackMesh->SetupAttachment(TrackComponent);
-    TrackMesh->SetSimulatePhysics(true);
 
     TrackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("TrackCollision"));
     TrackCollision->SetupAttachment(TrackMesh);
     TrackCollision->SetBoxExtent(TrackCollisionExtent);
     TrackCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     TrackCollision->SetGenerateOverlapEvents(true);
+    TrackCollision->SetNotifyRigidBodyCollision(true);
 
-    // get references
-    PlayerController = Cast<APolarisPlayerController>(GetController());
+        // Food and Water component
+    FoodWaterComponent = CreateDefaultSubobject<UFoodWater>(TEXT("FoodWaterComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -81,6 +83,10 @@ void ASnowmobilePawn::BeginPlay()
     Super::BeginPlay();
 
     // Set up component references
+
+    if (ChassisComponent)
+        ChassisComponent->SnowmobilePawn = this;
+
     if (LeftSkiComponent)
     {
         LeftSkiComponent->Chassis = ChassisComponent;
@@ -102,47 +108,44 @@ void ASnowmobilePawn::BeginPlay()
     }
 }
 
-// Called every frame
-void ASnowmobilePawn::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
 // Called to bind functionality to input
 void ASnowmobilePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
     // input bindings
-    PlayerInputComponent->BindAxis("Accelerate", this, &ASnowmobilePawn::Accelerate);
-    PlayerInputComponent->BindAxis("Steer", this, &ASnowmobilePawn::Steer);
-    PlayerInputComponent->BindAxis("Brake", this, &ASnowmobilePawn::Brake);
-    PlayerInputComponent->BindAxis("Dismount", this, &ASnowmobilePawn::Dismount);
+    if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+    {
+        EnhancedInput->BindAction(AccelerateAction, ETriggerEvent::Triggered, this, &ASnowmobilePawn::Accelerate);
+        EnhancedInput->BindAction(SteerAction, ETriggerEvent::Triggered, this, &ASnowmobilePawn::Steer);
+        EnhancedInput->BindAction(BrakeAction, ETriggerEvent::Triggered, this, &ASnowmobilePawn::Brake);
+        EnhancedInput->BindAction(DismountAction, ETriggerEvent::Triggered, this, &ASnowmobilePawn::Dismount);
+    }
 }
 
-void ASnowmobilePawn::Accelerate(float Value)
+void ASnowmobilePawn::Accelerate(const FInputActionValue& Value)
 {
-    if (FMath::Abs(Value) <= KINDA_SMALL_NUMBER || !ChassisComponent)
+    if (FMath::Abs(Value.Get<float>()) <= KINDA_SMALL_NUMBER || !ChassisComponent)
         return;
 
-    const FVector Force = GetActorForwardVector() * Value * ChassisComponent->ForceMultiplier;
+    const FVector Force = GetActorForwardVector() * Value.Get<float>() * ChassisComponent->ForceMultiplier;
     if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(ChassisComponent))
         Primitive->AddForce(Force, NAME_None, true);
 }
 
-void ASnowmobilePawn::Steer(float Value)
+void ASnowmobilePawn::Steer(const FInputActionValue& Value)
 {
-    if (FMath::Abs(Value) <= KINDA_SMALL_NUMBER || !ChassisComponent)
+    if (FMath::Abs(Value.Get<float>()) <= KINDA_SMALL_NUMBER || !ChassisComponent)
         return;
 
-    const FVector Torque = FVector(0.f, 0.f, Value * ChassisComponent->TorqueMultiplier);
+    const FVector Torque = FVector(0.f, 0.f, Value.Get<float>() * ChassisComponent->TorqueMultiplier);
     if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(ChassisComponent))
         Primitive->AddTorqueInRadians(Torque, NAME_None, true);
 }
 
-void ASnowmobilePawn::Brake(float Value)
+void ASnowmobilePawn::Brake(const FInputActionValue& Value)
 {
-    if (FMath::Abs(Value) <= KINDA_SMALL_NUMBER || !ChassisComponent)
+    if (FMath::Abs(Value.Get<float>()) <= KINDA_SMALL_NUMBER || !ChassisComponent)
         return;
 
     if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(ChassisComponent))
@@ -150,17 +153,95 @@ void ASnowmobilePawn::Brake(float Value)
         const FVector CurrentVelocity = Primitive->GetPhysicsLinearVelocity();
         if (!CurrentVelocity.IsNearlyZero())
         {
-            const FVector BrakeForce = -CurrentVelocity.GetSafeNormal() * Value * ChassisComponent->ForceMultiplier;
+            const FVector BrakeForce = -CurrentVelocity.GetSafeNormal() * Value.Get<float>() * ChassisComponent->ForceMultiplier;
             Primitive->AddForce(BrakeForce, NAME_None, true);
         }
     }
 }
 
-void ASnowmobilePawn::Dismount(float Value)
+void ASnowmobilePawn::Dismount(const FInputActionValue& Value)
 {
-    if (Value > 0.5f && PlayerController)
+    APolarisPlayerController* PlayerController = Cast<APolarisPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+    if (Value.Get<float>() > 0.5f && PlayerController)
     {
-        PlayerController->UnPossess();
+        PlayerPawn->SetActorHiddenInGame(false);
+        PlayerController->Possess(PlayerPawn);
+
+        // swap input to player pawn
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+            ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+        {
+            if (PlayerMappingContext == nullptr || SnowmobileMappingContext == nullptr)
+            {
+                UE_LOG(LogTemp, Warning,
+                    TEXT("ChassisComponent::OnChassisHit - Input Mapping Contexts not set on PlayerPawn"));
+                return;
+            }
+
+            Subsystem->RemoveMappingContext(SnowmobileMappingContext);
+            Subsystem->AddMappingContext(PlayerMappingContext, 0);
+        }
     }
 }
 
+void ASnowmobilePawn::PossessedBy(AController* NewController)
+{
+    Super::PossessedBy(NewController);
+
+    // copy food and water component from player pawn to snowmobile pawn
+    if (PlayerPawn && FoodWaterComponent)
+    {
+        if (UFoodWater* PlayerFoodWater = PlayerPawn->FindComponentByClass<UFoodWater>())
+        {
+            // copy values
+            FoodWaterComponent->Hunger = PlayerFoodWater->Hunger;
+            FoodWaterComponent->Thirst = PlayerFoodWater->Thirst;
+            FoodWaterComponent->MaxHunger = PlayerFoodWater->MaxHunger;
+            FoodWaterComponent->MaxThirst = PlayerFoodWater->MaxThirst;
+            FoodWaterComponent->HungerMult = PlayerFoodWater->HungerMult;
+            FoodWaterComponent->ThirstMult = PlayerFoodWater->ThirstMult;
+            FoodWaterComponent->StarveTickDamage = PlayerFoodWater->StarveTickDamage;
+            FoodWaterComponent->TimeSinceLastStarveTick = PlayerFoodWater->TimeSinceLastStarveTick;
+
+            // forward events
+            PlayerFoodWater->OnAppetite.AddDynamic(this, &ASnowmobilePawn::HandlePlayerAppetite);
+            PlayerFoodWater->OnStarving.AddDynamic(this, &ASnowmobilePawn::HandlePlayerStarving);
+
+            // broadcast initial values
+            FoodWaterComponent->OnAppetite.Broadcast(FoodWaterComponent->Hunger, FoodWaterComponent->Thirst);
+        }
+    }
+}
+
+void ASnowmobilePawn::UnPossessed()
+{
+    // remove bindings
+    if (PlayerPawn)
+    {
+        if (UFoodWater* PlayerFoodWater = PlayerPawn->FindComponentByClass<UFoodWater>())
+        {
+            PlayerFoodWater->OnAppetite.RemoveDynamic(this, &ASnowmobilePawn::HandlePlayerAppetite);
+            PlayerFoodWater->OnStarving.RemoveDynamic(this, &ASnowmobilePawn::HandlePlayerStarving);
+        }
+    }
+
+    Super::UnPossessed();
+}
+
+void ASnowmobilePawn::HandlePlayerAppetite(float NewHunger, float NewThirst)
+{
+    if (!FoodWaterComponent)
+        return;
+
+    FoodWaterComponent->Hunger = NewHunger;
+    FoodWaterComponent->Thirst = NewThirst;
+    FoodWaterComponent->OnAppetite.Broadcast(NewHunger, NewThirst);
+}
+
+void ASnowmobilePawn::HandlePlayerStarving(float Damage)
+{
+    if (!FoodWaterComponent)
+        return;
+
+    FoodWaterComponent->OnStarving.Broadcast(Damage);
+}

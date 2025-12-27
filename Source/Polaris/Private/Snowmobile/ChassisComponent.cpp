@@ -3,6 +3,8 @@
 
 #include "Polaris/Public/Snowmobile/ChassisComponent.h"
 #include "Polaris/Public/Snowmobile/SnowmobilePawn.h"
+#include <EnhancedInputSubsystems.h>
+#include <Kismet/GameplayStatics.h>
 
 UChassisComponent::UChassisComponent()
 {
@@ -22,11 +24,29 @@ void UChassisComponent::BeginPlay()
 void UChassisComponent::OnChassisHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, 
     UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
-    if (OtherActor && OtherComponent && OtherComponent != HitComponent)
+    // attach player to snowmobile on first hit
+    APawn* OtherPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+    if (OtherPawn && Cast<APawn>(OtherActor) == OtherPawn)
     {
-        if(OtherActor == SnowmobilePawn->PlayerController)
+        OtherPawn->SetActorHiddenInGame(true);
+        SnowmobilePawn->PlayerPawn = OtherPawn;
+        APolarisPlayerController* PlayerController = Cast<APolarisPlayerController>(OtherPawn->GetController());
+
+        PlayerController->Possess(SnowmobilePawn);
+
+        // swap input to snowmobile
+        if(UEnhancedInputLocalPlayerSubsystem* Subsystem = 
+            ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
         {
-            SnowmobilePawn->PlayerController->Possess(SnowmobilePawn);
+            if (SnowmobilePawn->PlayerMappingContext == nullptr || SnowmobilePawn->SnowmobileMappingContext == nullptr)
+            {
+                UE_LOG(LogTemp, Warning, 
+                    TEXT("ChassisComponent::OnChassisHit - Input Mapping Contexts not set on SnowmobilePawn"));
+                return;
+            }
+
+            Subsystem->RemoveMappingContext(SnowmobilePawn->PlayerMappingContext);
+            Subsystem->AddMappingContext(SnowmobilePawn->SnowmobileMappingContext, 0);
         }
     }
 }

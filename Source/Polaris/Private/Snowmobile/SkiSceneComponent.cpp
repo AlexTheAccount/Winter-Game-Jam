@@ -25,12 +25,14 @@ void USkiSceneComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
     FHitResult Hit;
     FCollisionQueryParams Params(SCENE_QUERY_STAT(SkiTrace), true, GetOwner());
     if (GetWorld()->LineTraceSingleByChannel(Hit, WorldStart, WorldEnd, ECC_Visibility, Params))
+    {
         ApplySkiForces(Hit);
 
-    if (bDrawTraceDebug)
-    {
-        DrawDebugLine(GetWorld(), WorldStart, Hit.ImpactPoint, FColor::Green, false, 0.1f);
-        DrawDebugLine(GetWorld(), Hit.ImpactPoint, WorldEnd, FColor::Red, false, 0.1f);
+        if (bDrawTraceDebug)
+        {
+            DrawDebugLine(GetWorld(), WorldStart, Hit.ImpactPoint, FColor::Green, false, 0.1f);
+            DrawDebugLine(GetWorld(), Hit.ImpactPoint, WorldEnd, FColor::Red, false, 0.1f);
+        }
     }
 }
 
@@ -40,7 +42,7 @@ void USkiSceneComponent::ApplySkiForces(const FHitResult& Hit)
     float Compression = FMath::Clamp(RestLength - Hit.Distance, 0.0f, RestLength);
 
     // normal force scalar from spring/damper (chassis velocity projected on normal for damping)
-    float RelativeVelocity = FVector::DotProduct(Chassis->GetComponentVelocity(), Hit.Normal);
+    float RelativeVelocity = FVector::DotProduct(Chassis->GetPhysicsLinearVelocityAtPoint(Hit.ImpactPoint), Hit.Normal);
     float NormalScalar = SpringStiffness * Compression - DampingCoefficient * RelativeVelocity;
     NormalScalar = FMath::Max(0.0f, NormalScalar); // normal force cannot pull
 

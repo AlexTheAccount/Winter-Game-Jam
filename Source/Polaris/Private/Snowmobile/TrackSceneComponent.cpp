@@ -11,6 +11,8 @@ UTrackSceneComponent::UTrackSceneComponent()
 
 void UTrackSceneComponent::BeginPlay()
 {
+    Super::BeginPlay();
+
     if (TrackCollision)
     {
         if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(TrackCollision))

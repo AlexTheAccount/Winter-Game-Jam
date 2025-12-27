@@ -10,6 +10,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "SnowmobilePawn.generated.h"
 
+class UFoodWater;
 class USkiSceneComponent;
 class UTrackSceneComponent;
 class UChassisComponent;
@@ -23,18 +24,40 @@ public:
 	ASnowmobilePawn();
 
     // References
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References", meta = (AllowPrivateAccess = "true"))
-    APolarisPlayerController* PlayerController = nullptr;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "References", meta = (AllowPrivateAccess = "true"))
+    APawn* PlayerPawn = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "References", meta = (AllowPrivateAccess = "true"))
+    UInputMappingContext* PlayerMappingContext = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "References", meta = (AllowPrivateAccess = "true"))
+    UInputMappingContext* SnowmobileMappingContext = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "References", meta = (AllowPrivateAccess = "true"))
+    UInputAction* AccelerateAction = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "References", meta = (AllowPrivateAccess = "true"))
+    UInputAction* BrakeAction = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "References", meta = (AllowPrivateAccess = "true"))
+    UInputAction* DismountAction = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "References", meta = (AllowPrivateAccess = "true"))
+    UInputAction* SteerAction = nullptr;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
     // Input functions
-    void Accelerate(float Value);
-    void Steer(float Value);
-    void Brake(float Value);
-    void Dismount(float Value);
+    void Accelerate(const FInputActionValue& Value);
+    void Steer(const FInputActionValue& Value);
+    void Brake(const FInputActionValue& Value);
+    void Dismount(const FInputActionValue& Value);
+
+    // Possession
+    virtual void PossessedBy(AController* NewController) override;
+    virtual void UnPossessed() override;
 
     // Components
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -83,7 +106,16 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
     FVector TrackCollisionExtent = FVector(50.f, 10.f, 5.f);
 
+    // handle UFoodWater
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+    UFoodWater* FoodWaterComponent = nullptr;
+
+    UFUNCTION()
+    void HandlePlayerAppetite(float NewHunger, float NewThirst);
+
+    UFUNCTION()
+    void HandlePlayerStarving(float Damage);
+
 public:
-	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 };
