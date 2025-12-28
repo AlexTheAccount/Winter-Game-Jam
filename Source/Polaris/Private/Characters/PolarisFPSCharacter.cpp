@@ -2,6 +2,8 @@
 
 
 #include "Polaris/Public/Characters/PolarisFPSCharacter.h"
+
+#include "Blueprint/UserWidget.h"
 #include "UObject/NoExportTypes.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -26,12 +28,18 @@ void APolarisFPSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (QTEClass)
+	{
+		QTEWidget = CreateWidget<UUserWidget>(Cast<APlayerController>(GetController()), QTEClass);
+	}
+
+
 	if (CurveFloat)
 	{
 		FOnTimelineFloat TimelineProgress;
 		TimelineProgress.BindUFunction(this, FName("FallProgress"));
 		FallTimeline.AddInterpFloat(CurveFloat, TimelineProgress, FName("Value"));
-		
+
 		FOnTimelineEventStatic OnFallFinish;
 		OnFallFinish.BindUFunction(this, FName("FallFinished"));
 		FallTimeline.SetTimelineFinishedFunc(OnFallFinish);
@@ -51,7 +59,7 @@ void APolarisFPSCharacter::FallFinished()
 {
 	auto FinishedFunc = &ThisClass::FinishedGettingUp;
 	float Delay = 0.01f;
-	if(!bIsGettingUp)
+	if (!bIsGettingUp)
 	{
 		bIsGettingUp = true;
 		FinishedFunc = &ThisClass::GetUp;
@@ -62,7 +70,7 @@ void APolarisFPSCharacter::FallFinished()
 
 void APolarisFPSCharacter::GetUp()
 {
-	if(bIsGettingUp)
+	if (bIsGettingUp)
 	{
 		FallTimeline.ReverseFromEnd();
 		bIsFalling = false;
@@ -74,10 +82,7 @@ void APolarisFPSCharacter::FinishedGettingUp()
 	bIsGettingUp = false;
 	FallTimeline.Stop();
 	Controller->EnableInput(Cast<APlayerController>(Controller));
-	SlipAmount = 0.f;
 	GetMesh()->SetVisibility(true);
-
-	
 }
 
 void APolarisFPSCharacter::TraceForFloor(FHitResult& FloorHit)
@@ -90,6 +95,53 @@ void APolarisFPSCharacter::TraceForFloor(FHitResult& FloorHit)
 	FVector End = Start + GetActorUpVector() * -500.f;
 	GetWorld()->LineTraceSingleByChannel(FloorHit, Start, End, ECC_Visibility, Params);
 	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false);
+}
+
+void APolarisFPSCharacter::StartFall()
+{
+	bIsFalling = true;
+	GetCharacterMovement()->StopMovementImmediately();
+	Controller->DisableInput(Cast<APlayerController>(Controller));
+
+	CameraStartRot = Controller->GetControlRotation();
+	CameraEndRot = CameraStartRot + FRotator(90.f, 0.f, -90.f);
+
+	CameraStartLoc = Camera->GetRelativeLocation();
+	CameraEndLoc = CameraStartLoc + FVector(0.f, 0.f, -100.f);
+
+	GetMesh()->SetVisibility(false);
+	FallTimeline.PlayFromStart();
+}
+
+void APolarisFPSCharacter::StartQTE()
+{
+	bQTEActive = true;
+	QTEWidget->AddToViewport();
+	GetWorldTimerManager().SetTimer(QTETimer, this, &ThisClass::EndQTE, QTEEndTime);
+}
+
+void APolarisFPSCharacter::EndQTE()
+{
+	if (!bQTESuccess)
+	{
+		StartFall();
+	}
+	ResetQTEValues();
+}
+
+
+void APolarisFPSCharacter::QTESuccessed()
+{
+	GetWorldTimerManager().ClearTimer(QTETimer);
+	ResetQTEValues();
+}
+
+void APolarisFPSCharacter::ResetQTEValues()
+{
+	bQTESuccess = false;
+	bQTEActive = false;
+	SlipAmount = 0.f;
+	QTEWidget->RemoveFromParent();
 }
 
 void APolarisFPSCharacter::Tick(float DeltaSeconds)
@@ -113,20 +165,9 @@ void APolarisFPSCharacter::Tick(float DeltaSeconds)
 				SlipAmount += 0.1f;
 				if (SlipAmount >= SlipThreshold)
 				{
-					if (!bIsFalling)
+					if (!bQTEActive)
 					{
-						bIsFalling = true;
-						GetCharacterMovement()->StopMovementImmediately();
-						Controller->DisableInput(Cast<APlayerController>(Controller));
-						
-						CameraStartRot = Controller->GetControlRotation();
-						CameraEndRot = CameraStartRot + FRotator(90.f, 0.f, -90.f);
-						
-						CameraStartLoc  = Camera->GetRelativeLocation();
-						CameraEndLoc = CameraStartLoc + FVector(0.f, 0.f, -100.f);
-
-						GetMesh()->SetVisibility(false);
-						FallTimeline.PlayFromStart();
+						StartQTE();
 					}
 				}
 			}

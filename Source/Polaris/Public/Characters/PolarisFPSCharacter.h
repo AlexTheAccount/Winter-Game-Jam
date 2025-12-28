@@ -7,8 +7,10 @@
 #include "GameFramework/Character.h"
 #include "PolarisFPSCharacter.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnQTEEnd, bool /*QTE Active */)
 class USpringArmComponent;
 class UCameraComponent;
+class UUserWidget;
 
 UCLASS()
 class POLARIS_API APolarisFPSCharacter : public ACharacter
@@ -21,19 +23,21 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void BeginPlay() override;
 
-	UFUNCTION()
-	void FallProgress(float Value);
 	
-	UFUNCTION()
-	void FallFinished();
-
-	void GetUp();
-
-	void FinishedGettingUp();
-	
-	void TraceForFloor(FHitResult& FloorHit);
 
 protected:
+	
+	void TraceForFloor(FHitResult& FloorHit);
+	UFUNCTION()
+	void FallProgress(float Value);
+	UFUNCTION()
+	void FallFinished();
+	void StartFall();
+	void GetUp();
+	void FinishedGettingUp();
+	void StartQTE();
+	void EndQTE();
+	void ResetQTEValues();
 
 	FTimeline FallTimeline;
 	UPROPERTY(EditAnywhere, Category = "Timeline")
@@ -53,10 +57,30 @@ protected:
 	UPROPERTY()
 	float SlipAmount;
 	
+	FTimerHandle GetUpTimer;
+	
 	bool bIsFalling = false;
 	bool bIsGettingUp = false;
 	
-	FTimerHandle GetUpTimer;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline|QTE")
+	float QTEEndTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline|QTE")
+	bool bQTESuccess = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Timeline|QTE")
+	bool bQTEActive = false;
+	
+	FTimerHandle QTETimer;
+
+	UFUNCTION(BlueprintCallable)
+	void QTESuccessed();
+
+	TObjectPtr<UUserWidget> QTEWidget;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Timeline|QTE")
+	TSubclassOf<UUserWidget> QTEClass;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UCameraComponent> Camera;
 
