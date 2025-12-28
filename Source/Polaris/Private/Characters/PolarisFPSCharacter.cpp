@@ -27,7 +27,7 @@ APolarisFPSCharacter::APolarisFPSCharacter()
 void APolarisFPSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	if (QTEClass)
 	{
 		QTEWidget = CreateWidget<UUserWidget>(Cast<APlayerController>(GetController()), QTEClass);
@@ -130,7 +130,7 @@ void APolarisFPSCharacter::EndQTE()
 }
 
 
-void APolarisFPSCharacter::QTESuccessed()
+void APolarisFPSCharacter::QTESucceed()
 {
 	GetWorldTimerManager().ClearTimer(QTETimer);
 	ResetQTEValues();

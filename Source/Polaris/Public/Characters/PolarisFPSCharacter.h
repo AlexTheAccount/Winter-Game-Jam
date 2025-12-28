@@ -27,13 +27,8 @@ public:
 	float Health = MaxHealth;
 
 
-
-protected:	
-
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void BeginPlay() override;
-
-	
 
 protected:
 	
@@ -84,7 +79,7 @@ protected:
 	FTimerHandle QTETimer;
 
 	UFUNCTION(BlueprintCallable)
-	void QTESuccessed();
+	void QTESucceed();
 
 	TObjectPtr<UUserWidget> QTEWidget;
 
