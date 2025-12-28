@@ -45,6 +45,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "References", meta = (AllowPrivateAccess = "true"))
     UInputAction* SteerAction = nullptr;
 
+    // Health for FoodWater
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+    float MaxHealth = 100.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+    float Health = MaxHealth;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -55,10 +62,6 @@ protected:
     void Brake(const FInputActionValue& Value);
     void Dismount(const FInputActionValue& Value);
 
-    // Possession
-    virtual void PossessedBy(AController* NewController) override;
-    virtual void UnPossessed() override;
-
     // Components
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
     USceneComponent* RootSceneComponent = nullptr;
@@ -67,25 +70,13 @@ protected:
     UChassisComponent* ChassisComponent = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-    UBoxComponent* ChassisCollision = nullptr;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
     UStaticMeshComponent* LeftSkiMesh = nullptr;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-    UBoxComponent* LeftSkiCollision = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
     UStaticMeshComponent* RightSkiMesh = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-    UBoxComponent* RightSkiCollision = nullptr;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
     UStaticMeshComponent* TrackMesh = nullptr;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-    UBoxComponent* TrackCollision = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
     USkiSceneComponent* LeftSkiComponent = nullptr;
@@ -95,16 +86,6 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
     UTrackSceneComponent* TrackComponent = nullptr;
-
-    // Collision Extents
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
-    FVector ChassisCollisionExtent = FVector(100.f, 50.f, 25.f);
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
-    FVector SkiCollisionExtent = FVector(50.f, 10.f, 5.f);
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
-    FVector TrackCollisionExtent = FVector(50.f, 10.f, 5.f);
 
     // handle UFoodWater
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -118,4 +99,9 @@ protected:
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+    // Attachment
+    void AttachPlayer(APawn* InPlayerPawn, APolarisPlayerController* PlayerController);
+    void DetachPlayer(APolarisPlayerController* PlayerController);
+    bool bIsPlayerAttached = false;
 };

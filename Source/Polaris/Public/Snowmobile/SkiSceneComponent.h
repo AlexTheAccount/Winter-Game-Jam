@@ -29,9 +29,6 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
     UStaticMeshComponent* SkiMesh = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
-    UBoxComponent* SkiCollision = nullptr;
-
 protected:
     // Compute lateral velocity on contact
     FVector ComputeLateralVelocity(const FHitResult& Hit) const;

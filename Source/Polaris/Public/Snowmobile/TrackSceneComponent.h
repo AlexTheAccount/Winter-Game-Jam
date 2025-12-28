@@ -26,10 +26,7 @@ public:
     // Sets default values for this component's properties
     UTrackSceneComponent();
 
-    // Track mesh and collision (set by pawn)
+    // Track mesh (set by pawn)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
     UStaticMeshComponent* TrackMesh = nullptr;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
-    UBoxComponent* TrackCollision = nullptr;
 };
