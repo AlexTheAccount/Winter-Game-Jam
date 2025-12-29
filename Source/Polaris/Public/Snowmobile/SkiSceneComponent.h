@@ -19,6 +19,7 @@ class POLARIS_API USkiSceneComponent : public USceneComponent
 public:
     USkiSceneComponent();
 
+    virtual void BeginPlay() override;
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     // Snowmobile chassis reference
@@ -37,8 +38,11 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Raycast")
     float MaxTraceDistance = 100.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Raycast")
-    float RestLength = 50.0f;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Raycast")
+    float RestLength;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Raycast", meta = (ClampMin = "0.0", UIMin = "0.0"))
+    float LengthScale = 0.008f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Raycast")
     float SpringStiffness = 100000.0f;

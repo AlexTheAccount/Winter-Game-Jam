@@ -42,14 +42,68 @@ ASnowmobilePawn::ASnowmobilePawn()
         // Left Ski mesh
     LeftSkiMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftSkiMesh"));
     LeftSkiMesh->SetupAttachment(LeftSkiComponent);
+    LeftSkiMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    LeftSkiMesh->SetCollisionProfileName(TEXT("NoCollision"));
+    LeftSkiMesh->SetSimulatePhysics(false);
 
         // Right Ski mesh
     RightSkiMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RightSkiMesh"));
     RightSkiMesh->SetupAttachment(RightSkiComponent);
+    RightSkiMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    RightSkiMesh->SetCollisionProfileName(TEXT("NoCollision"));
+    RightSkiMesh->SetSimulatePhysics(false);
 
         // Track mesh
     TrackMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TrackMesh"));
     TrackMesh->SetupAttachment(TrackComponent);
+    TrackMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    TrackMesh->SetCollisionProfileName(TEXT("NoCollision"));
+    TrackMesh->SetSimulatePhysics(false);
+
+        // left ski Collision
+    LeftSkiCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftSkiCollision"));
+    LeftSkiCollision->SetupAttachment(LeftSkiComponent);
+    LeftSkiCollision->SetBoxExtent(FVector(40.0f, 8.0f, 4.0f));
+    LeftSkiCollision->SetRelativeLocation(FVector::ZeroVector);
+    LeftSkiCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    LeftSkiCollision->SetCollisionObjectType(ECC_WorldDynamic);
+    LeftSkiCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+    LeftSkiCollision->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+    LeftSkiCollision->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+    LeftSkiCollision->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
+    LeftSkiCollision->SetNotifyRigidBodyCollision(true);
+    LeftSkiCollision->SetGenerateOverlapEvents(false);
+    LeftSkiCollision->SetSimulatePhysics(false);
+
+        // right ski Collision
+    RightSkiCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RightSkiCollision"));
+    RightSkiCollision->SetupAttachment(RightSkiComponent);
+    RightSkiCollision->SetBoxExtent(FVector(40.0f, 8.0f, 4.0f));
+    RightSkiCollision->SetRelativeLocation(FVector::ZeroVector);
+    RightSkiCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    RightSkiCollision->SetCollisionObjectType(ECC_WorldDynamic);
+    RightSkiCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+    RightSkiCollision->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+    RightSkiCollision->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+    RightSkiCollision->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
+    RightSkiCollision->SetNotifyRigidBodyCollision(true);
+    RightSkiCollision->SetGenerateOverlapEvents(false);
+    RightSkiCollision->SetSimulatePhysics(false);
+
+        // track Collision
+    TrackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("TrackCollision"));
+    TrackCollision->SetupAttachment(TrackComponent);
+    TrackCollision->SetBoxExtent(FVector(70.0f, 18.0f, 6.0f));
+    TrackCollision->SetRelativeLocation(FVector::ZeroVector);
+    TrackCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    TrackCollision->SetCollisionObjectType(ECC_WorldDynamic);
+    TrackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+    TrackCollision->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+    TrackCollision->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+    TrackCollision->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
+    TrackCollision->SetNotifyRigidBodyCollision(true);
+    TrackCollision->SetGenerateOverlapEvents(false);
+    TrackCollision->SetSimulatePhysics(false);
 
         // Food and Water component
     FoodWaterComponent = CreateDefaultSubobject<UFoodWater>(TEXT("FoodWaterComponent"));
@@ -98,14 +152,32 @@ void ASnowmobilePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
     }
 }
 
+void ASnowmobilePawn::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    // Update the attached player's controller rotation to match the seat orientation
+    if (bIsPlayerAttached && AttachedPlayerController && ChassisComponent)
+    {
+        // calculate desired world rotation for the controller to match the seat rotation
+        const FRotator DesiredWorldRotation = (ChassisComponent->GetComponentRotation() + SeatRelativeRotation + FRotator(0.0f, 180.0f, 0.0f)).GetNormalized();
+        AttachedPlayerController->SetControlRotation(DesiredWorldRotation);
+    }
+}
+
 void ASnowmobilePawn::Accelerate(const FInputActionValue& Value)
 {
     if (FMath::Abs(Value.Get<float>()) <= KINDA_SMALL_NUMBER || !ChassisComponent)
         return;
 
-    const FVector Force = GetActorForwardVector() * Value.Get<float>() * ChassisComponent->ForceMultiplier;
+    const float InputValue = Value.Get<float>();
+
     if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(ChassisComponent))
-        Primitive->AddForce(Force, NAME_None, true);
+    {
+        const FVector Forward = -ChassisComponent->GetForwardVector();
+        const FVector Force = Forward * InputValue * ChassisComponent->ForceMultiplier;
+        Primitive->AddForce(Force, NAME_None, false);
+    }
 }
 
 void ASnowmobilePawn::Steer(const FInputActionValue& Value)
@@ -113,9 +185,18 @@ void ASnowmobilePawn::Steer(const FInputActionValue& Value)
     if (FMath::Abs(Value.Get<float>()) <= KINDA_SMALL_NUMBER || !ChassisComponent)
         return;
 
-    const FVector Torque = FVector(0.f, 0.f, Value.Get<float>() * ChassisComponent->TorqueMultiplier);
     if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(ChassisComponent))
-        Primitive->AddTorqueInRadians(Torque, NAME_None, true);
+    {
+        float Input = Value.Get<float>();
+
+        const FVector Velocity = Primitive->GetPhysicsLinearVelocity();
+        const float ForwardSpeed = FVector::DotProduct(Velocity, GetActorForwardVector());
+        const float SpeedScale = FMath::Clamp(FMath::Abs(ForwardSpeed) / 600.0f, 0.0f, 1.0f);
+
+        const FVector Torque = ChassisComponent->GetUpVector() * Input * ChassisComponent->TorqueMultiplier * SpeedScale;
+
+        Primitive->AddTorqueInRadians(Torque, NAME_None, false);
+    }
 }
 
 void ASnowmobilePawn::Brake(const FInputActionValue& Value)
@@ -125,16 +206,25 @@ void ASnowmobilePawn::Brake(const FInputActionValue& Value)
 
     if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(ChassisComponent))
     {
-        const FVector CurrentVelocity = Primitive->GetPhysicsLinearVelocity();        
-        const FVector HorizontalVelocity = FVector(CurrentVelocity.X, CurrentVelocity.Y, 0.0f);
+        const FVector CurrentVelocity = Primitive->GetPhysicsLinearVelocity();
+        const FVector Forward = GetActorForwardVector();
 
-        if (!CurrentVelocity.IsNearlyZero())
-        {
-            const FVector BrakeDirection = -HorizontalVelocity.GetSafeNormal();
-            const FVector BrakeForce = BrakeDirection * Value.Get<float>() * ChassisComponent->ForceMultiplier;
+        const float ForwardSpeed = FVector::DotProduct(CurrentVelocity, Forward);
+        if (FMath::IsNearlyZero(ForwardSpeed))
+            return;
 
-            Primitive->AddForce(BrakeForce, NAME_None, false);
-        }
+        const float Strength = FMath::Abs(Value.Get<float>()) * ChassisComponent->ForceMultiplier;
+        const float DeltaTime = GetWorld()->GetDeltaSeconds();
+
+        const float SpeedReduction = Strength * DeltaTime;
+        float NewForwardSpeed;
+        if (ForwardSpeed > 0.0f)
+            NewForwardSpeed = FMath::Max(0.0f, ForwardSpeed - SpeedReduction);
+        else
+            NewForwardSpeed = FMath::Min(0.0f, ForwardSpeed + SpeedReduction);
+
+        const FVector VelocityDelta = (NewForwardSpeed - ForwardSpeed) * Forward;
+        Primitive->SetPhysicsLinearVelocity(CurrentVelocity + VelocityDelta);
     }
 }
 
@@ -204,6 +294,31 @@ void ASnowmobilePawn::AttachPlayer(APawn* InPlayerPawn, APolarisPlayerController
 
     if (ACharacter* Character = Cast<ACharacter>(PlayerPawn))
     {
+        // Determine facing direction brfore disabling movement for attachment
+        FVector FacingDirection = FVector::ZeroVector;
+        float Speed = 0.0f;
+        UCharacterMovementComponent* CharacterMoveComponent = Character->GetCharacterMovement();
+        if (CharacterMoveComponent)
+        {
+            Speed = CharacterMoveComponent->Velocity.Size();
+            FacingDirection = CharacterMoveComponent->Velocity.GetSafeNormal();
+        }
+        else
+        {
+            Speed = Character->GetVelocity().Size();
+            FacingDirection = Character->GetVelocity().GetSafeNormal();
+        }
+
+        // If almost stationary, use mesh or actor forward
+        const float SpeedThreshold = 10.0f;
+        if (Speed <= SpeedThreshold)
+        {
+            if (Character->GetMesh())
+                FacingDirection = Character->GetMesh()->GetForwardVector();
+            else
+                FacingDirection = Character->GetActorForwardVector();
+        }
+
         // hide player's mesh
         if (Character->GetMesh())
         {
@@ -211,22 +326,48 @@ void ASnowmobilePawn::AttachPlayer(APawn* InPlayerPawn, APolarisPlayerController
         }
 
         // Disable movement and collision on player pawn
-        if (UCharacterMovementComponent* CharMove = Character->GetCharacterMovement())
+        if (CharacterMoveComponent)
         {
-            CharMove->DisableMovement();
+            CharacterMoveComponent->DisableMovement();
         }
         if (UCapsuleComponent* Capsule = Character->GetCapsuleComponent())
         {
             Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         }
 
-        // attach player pawn to snowmobile root
-        FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, true);
+        // flip the seat yaw based on facing or chassis forward
+        const FVector ChassisForward = ChassisComponent->GetForwardVector().GetSafeNormal();
+        FVector UseFacing = FacingDirection.GetSafeNormal();
+        // if UseFacing is degenerate, fall back to actor forward
+        if (UseFacing.IsNearlyZero())
+            UseFacing = Character->GetActorForwardVector().GetSafeNormal();
+
+        // final seat rotation
+        FRotator FinalSeatRotation = SeatRelativeRotation;
+        FinalSeatRotation.Yaw += 180.0f;
+        FinalSeatRotation = FinalSeatRotation.GetNormalized();
+
+        // attach player pawn to chassis
+        FAttachmentTransformRules AttachRules(EAttachmentRule::KeepRelative, true);
         PlayerPawn->AttachToComponent(ChassisComponent, AttachRules, NAME_None);
+
+        // position and rotate relative to chassis
+        PlayerPawn->SetActorRelativeLocation(SeatRelativeLocation);
+        PlayerPawn->SetActorRelativeRotation(FinalSeatRotation);
+
+        // set controller rotation to match seat in world space
+        const FRotator DesiredWorldRotation = (ChassisComponent->GetComponentRotation() + FinalSeatRotation).GetNormalized();
+        PlayerController->SetControlRotation(DesiredWorldRotation);
+
+        // make player pawn face controller and not rotate with movement
+        Character->bUseControllerRotationYaw = true;
+        if (UCharacterMovementComponent* CharacterMove = Character->GetCharacterMovement())
+            CharacterMove->bOrientRotationToMovement = false;
+
+        // set the player controller's pawn
+        AttachedPlayerController = PlayerController;
     }
 
-    // swap input to snowmobile   
-        
     // disable input on player pawn
     if (PlayerPawn)
     {
@@ -305,6 +446,9 @@ void ASnowmobilePawn::DetachPlayer(APolarisPlayerController* PlayerController)
         FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
         PlayerPawn->DetachFromActor(DetachRules);
     }
+
+    // clear attached controller pointer
+    AttachedPlayerController = nullptr;
 
     // swap input back to player pawn
     DisableInput(PlayerController);

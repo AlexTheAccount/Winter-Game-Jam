@@ -76,7 +76,16 @@ protected:
     UStaticMeshComponent* RightSkiMesh = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-    UStaticMeshComponent* TrackMesh = nullptr;
+    UStaticMeshComponent* TrackMesh = nullptr; 
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+    UBoxComponent* LeftSkiCollision = nullptr;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+    UBoxComponent* RightSkiCollision = nullptr;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+    UBoxComponent* TrackCollision = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
     USkiSceneComponent* LeftSkiComponent = nullptr;
@@ -88,8 +97,15 @@ protected:
     UTrackSceneComponent* TrackComponent = nullptr;
 
     // handle UFoodWater
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FoodWater", meta = (AllowPrivateAccess = "true"))
     UFoodWater* FoodWaterComponent = nullptr;
+
+    // Seating config
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Seating", meta = (AllowPrivateAccess = "true"))
+    FVector SeatRelativeLocation = FVector(0.0f, 0.0f, 50.0f);
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Seating", meta = (AllowPrivateAccess = "true"))
+    FRotator SeatRelativeRotation = FRotator::ZeroRotator;
 
     UFUNCTION()
     void HandlePlayerAppetite(float NewHunger, float NewThirst);
@@ -99,9 +115,13 @@ protected:
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    virtual void Tick(float DeltaTime) override;
 
     // Attachment
     void AttachPlayer(APawn* InPlayerPawn, APolarisPlayerController* PlayerController);
     void DetachPlayer(APolarisPlayerController* PlayerController);
     bool bIsPlayerAttached = false;
+
+private:
+    APolarisPlayerController* AttachedPlayerController = nullptr;
 };
