@@ -30,6 +30,15 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
     UStaticMeshComponent* SkiMesh = nullptr;
 
+    UFUNCTION()
+    void OnSkiHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+        UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+
+    UFUNCTION()
+    void OnSkiBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, 
+        bool bFromSweep, const FHitResult& SweepResult);
+
 protected:
     // Compute lateral velocity on contact
     FVector ComputeLateralVelocity(const FHitResult& Hit) const;
@@ -42,25 +51,25 @@ protected:
     float RestLength;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Raycast", meta = (ClampMin = "0.0", UIMin = "0.0"))
-    float LengthScale = 0.008f;
+    float LengthScale = 1.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Raycast")
-    float SpringStiffness = 100000.0f;
+    float SpringStiffness = 800.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Raycast")
-    float DampingCoefficient = 5000.0f;
+    float DampingCoefficient = 40.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Raycast")
-    float LateralStiffness = 10000.0f;
+    float LateralStiffness = 80.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Raycast")
     float SkiFriction = 0.8f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Raycast", meta = (ClampMin = "0.0"))
-    float DampenerMultiplier = 2000.0f;
+    float DampenerMultiplier = 16.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Raycast", meta = (ClampMin = "0.0"))
-    float StaticFrictionThreshold = 5.0f;
+    float StaticFrictionThreshold = 0.04f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Raycast")
     bool bDrawTraceDebug = false;

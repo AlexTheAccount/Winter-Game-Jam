@@ -18,15 +18,20 @@ class POLARIS_API UTrackSceneComponent : public USceneComponent
 protected:
     virtual void BeginPlay() override;
 
-    UFUNCTION()
-    void OnTrackHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
-        UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
-
 public:
     // Sets default values for this component's properties
     UTrackSceneComponent();
 
     // Track mesh (set by pawn)
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References");
     UStaticMeshComponent* TrackMesh = nullptr;
+
+    UFUNCTION()
+    void OnTrackHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+        UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+
+    UFUNCTION()
+    void OnTrackBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+        bool bFromSweep, const FHitResult& SweepResult);
 };

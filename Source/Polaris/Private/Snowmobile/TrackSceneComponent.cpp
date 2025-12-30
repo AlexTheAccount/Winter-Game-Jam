@@ -22,3 +22,25 @@ void UTrackSceneComponent::OnTrackHit(UPrimitiveComponent* HitComponent, AActor*
         UE_LOG(LogTemp, Warning, TEXT("Track hit actor: %s"), *OtherActor->GetName());
     }
 }
+
+void UTrackSceneComponent::OnTrackBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool 
+    bFromSweep, const FHitResult& SweepResult)
+{
+    if (!OtherActor || !OtherComp)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Track begin overlap invalid actor or component"));
+
+        return;
+    }
+
+    // If sweep contains blocking info
+    if (bFromSweep && SweepResult.bBlockingHit)
+    {
+        OnTrackHit(OverlappedComponent, OtherActor, OtherComp, FVector::ZeroVector, SweepResult);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Verbose, TEXT("Track overlap with %s"), *OtherActor->GetName());
+    }
+}

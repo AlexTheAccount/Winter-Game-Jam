@@ -31,6 +31,54 @@ void USkiSceneComponent::BeginPlay()
     }
 }
 
+void USkiSceneComponent::OnSkiHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, 
+    UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
+{
+    if (!OtherActor || !OtherComponent || OtherComponent == HitComponent)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Ski hit invalid actor or component"));
+        return;
+    }
+
+    ApplySkiForces(Hit);
+}
+
+void USkiSceneComponent::OnSkiBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+    if (!OtherActor || !OtherComp)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Ski begin overlap invalid actor or component"));
+
+        return;
+    }
+
+    // use sweep result if available
+    if (bFromSweep && SweepResult.bBlockingHit)
+    {
+        ApplySkiForces(SweepResult);
+        return;
+    }
+    else // do a line trace down to find contact point
+    {
+        FHitResult Hit;
+        const FVector Up = GetComponentTransform().GetUnitAxis(EAxis::Z);
+        const FVector WorldStart = GetComponentLocation() + Up * 1.0f;
+        const FVector WorldEnd = WorldStart - Up * MaxTraceDistance;
+
+        FCollisionQueryParams Params(SCENE_QUERY_STAT(SkiOverlapTrace), true, GetOwner());
+        if (SkiMesh)
+            Params.AddIgnoredComponent(SkiMesh);
+
+        if (GetWorld()->LineTraceSingleByChannel(Hit, WorldStart, WorldEnd, ECC_Visibility, Params))
+        {
+            if (Hit.GetComponent() && Hit.GetComponent() != SkiMesh)
+            {
+                ApplySkiForces(Hit);
+            }
+        }
+    }
+}
+
 void USkiSceneComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -70,7 +118,11 @@ void USkiSceneComponent::ApplySkiForces(const FHitResult& Hit)
     const FVector AnchorPosition = GetComponentLocation();
     const float DistanceAlongUp = FVector::DotProduct(AnchorPosition - Hit.ImpactPoint, Up);
     const float CompressionScaled = FMath::Clamp(RestLength - DistanceAlongUp, 0.0f, RestLength);
-    const float Compression = CompressionScaled * LengthScale;
+    const float Compression = CompressionScaled;
+
+    // avoid tiny compression values
+    const float MinCompression = 0.02f;
+    const float UsedCompression = FMath::Max(Compression, MinCompression);
 
     // Compute relative velocity at contact point
     FVector ChassisVelocityAtPoint = Chassis->GetPhysicsLinearVelocityAtPoint(Hit.ImpactPoint);
@@ -83,28 +135,37 @@ void USkiSceneComponent::ApplySkiForces(const FHitResult& Hit)
             SurfaceVelocityAtPoint = HitComponent->GetPhysicsLinearVelocityAtPoint(Hit.ImpactPoint);
         }
     }
-    const FVector RelativeVelocityScaled = ChassisVelocityAtPoint - SurfaceVelocityAtPoint;
-    const FVector RelativeVelocity = RelativeVelocityScaled * LengthScale;
+    const FVector RelativeVelocity = ChassisVelocityAtPoint - SurfaceVelocityAtPoint;
 
     // normal force calculation
     const FVector Normal = Hit.Normal.GetSafeNormal();
     const float RelativeVelocityAlongNormal = FVector::DotProduct(RelativeVelocity, Normal);
 
     // spring + damping along normal
-    float NormalScalar = SpringStiffness * Compression - DampingCoefficient * RelativeVelocityAlongNormal;
+    float NormalScalar = SpringStiffness * UsedCompression - DampingCoefficient * RelativeVelocityAlongNormal;
     NormalScalar = FMath::Max(0.0f, NormalScalar);
-    const FVector NormalForce = Normal * NormalScalar;
 
-    // lateral (side) friction/damping
-    FVector LateralVelocityScaled = ComputeLateralVelocity(Hit);
-    FVector LateralVelocity = LateralVelocityScaled * LengthScale;
+    // estimate weight fallback based on chassis mass
+    float ChassisMass = 0.0f;
+    if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(Chassis))
+    {
+        ChassisMass = Primitive->GetMass();
+    }
+    const float GravityZ = FMath::Abs(GetWorld()->GetGravityZ());
+    const float WeightAtContact = ChassisMass * GravityZ * 0.35f;
+
+    // Use the larger of computed spring normal and weight fallback
+    const float EffectiveNormalScalar = FMath::Max(NormalScalar, WeightAtContact);
+    const FVector NormalForce = Normal * EffectiveNormalScalar;
+
+    // lateral friction/damping
+    FVector LateralVelocity = ComputeLateralVelocity(Hit);
 
     // remove surface lateral velocity if any
     if (!SurfaceVelocityAtPoint.IsNearlyZero())
     {
         FVector SurfaceLateral = SurfaceVelocityAtPoint;
         SurfaceLateral -= FVector::DotProduct(SurfaceLateral, Normal) * Normal;
-        SurfaceLateral *= LengthScale;
 
         // remove forward component
         FVector SkiForward = SkiMesh->GetForwardVector();
@@ -118,16 +179,24 @@ void USkiSceneComponent::ApplySkiForces(const FHitResult& Hit)
         // remove surface lateral from lateral velocity
         LateralVelocity -= SurfaceLateral;
     }
-    
+
     // lateral damping proportional to lateral relative velocity and compression
     FVector LateralFriction = FVector::ZeroVector;
     if (!LateralVelocity.IsNearlyZero())
     {
         // apply lateral damping
-        LateralFriction = -LateralVelocity * LateralStiffness * Compression;
+        LateralFriction = -LateralVelocity * LateralStiffness * UsedCompression;
+
+        // clamp lateral friction to Coulomb limit based on effective normal
+        const float MaxLateralFriction = SkiFriction * EffectiveNormalScalar;
+        const float LatMag = LateralFriction.Size();
+        if (LatMag > MaxLateralFriction && LatMag > KINDA_SMALL_NUMBER)
+        {
+            LateralFriction = LateralFriction.GetSafeNormal() * MaxLateralFriction;
+        }
     }
 
-    // longitudinal (forward) friction/damping
+    // forward friction/damping
     FVector SkiForward = SkiMesh->GetForwardVector();
     FVector ForwardOnPlane = SkiForward - FVector::DotProduct(SkiForward, Normal) * Normal;
     if (!ForwardOnPlane.IsNearlyZero())
@@ -138,18 +207,18 @@ void USkiSceneComponent::ApplySkiForces(const FHitResult& Hit)
         const FVector LongitudinalVelocity = ForwardOnPlane * ForwardSpeed;
 
         // viscous damping proportional to compression
-        const float Dampener = DampenerMultiplier * Compression;
+        const float Dampener = DampenerMultiplier * UsedCompression;
         FVector LongitudinalForce = -LongitudinalVelocity * Dampener;
 
-        // maximum friction based on normal force
-        float MaxFriction = SkiFriction * NormalScalar;
+        // maximum friction based on effective normal force
+        float MaxFriction = SkiFriction * EffectiveNormalScalar;
 
         // clamp to max friction
         if (LongitudinalForce.Size() > MaxFriction)
             LongitudinalForce = LongitudinalForce.GetSafeNormal() * MaxFriction;
 
         // static friction to prevent creeping when nearly stopped
-        const float StaticThresholdScaled = StaticFrictionThreshold * LengthScale;
+        const float StaticThresholdScaled = StaticFrictionThreshold;
         if (FMath::Abs(ForwardSpeed) < StaticThresholdScaled)
         {
             // compute required force to stop movement
