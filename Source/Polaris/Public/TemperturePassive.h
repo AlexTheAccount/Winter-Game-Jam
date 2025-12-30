@@ -1,0 +1,66 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Components/ActorComponent.h"
+#include "TemperturePassive.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCastFreezing, float, damage);
+
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class POLARIS_API UTemperturePassive : public UActorComponent
+{
+	GENERATED_BODY()
+
+
+public:	
+	// Sets default values for this component's properties
+	UTemperturePassive();
+
+	UPROPERTY(BlueprintAssignable)
+	FCastFreezing OnFreezingTick;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DefaultEnviromentTemp = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float EnviromentTemp = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Insulation = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float FinalTemp = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float TransitionSpeed = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float FreezingTickTemp = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float TimeSinceLastFreezingTick = 15.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float TimePerFreezingTick = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float FreezingTickDamage = 15.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool Freezing;
+
+	UFUNCTION(BlueprintCallable)
+	void CalculateTemp(float _DeltaTime);
+
+protected:
+	// Called when the game starts
+	virtual void BeginPlay() override;
+
+public:	
+	// Called every frame
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+		
+};
