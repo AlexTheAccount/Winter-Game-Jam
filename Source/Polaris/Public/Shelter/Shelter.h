@@ -51,6 +51,9 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
     UStaticMeshComponent* FuelTankMesh = nullptr;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
+    UStaticMeshComponent* DoorMesh = nullptr;
+
     // collision
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
@@ -62,9 +65,8 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
     UBoxComponent* FuelTankCollision = nullptr;
 
-    // Animation
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Timeline", meta = (AllowPrivateAccess = "true"))
-    UTimelineComponent* DoorTimeline;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
+    UBoxComponent* DoorCollision = nullptr;
 
 private:
     // Construction helpers

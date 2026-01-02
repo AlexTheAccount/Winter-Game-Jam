@@ -29,6 +29,8 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Door")
     void CloseDoor();
 
+    void SetDoorMesh(UStaticMeshComponent* InDoorMesh) { DoorMesh = InDoorMesh; }
+    void SetDoorCollision(UBoxComponent* InDoorCollision) { DoorCollision = InDoorCollision; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -39,17 +41,9 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Timeline", meta = (AllowPrivateAccess = "true"))
     UTimelineComponent* DoorTimeline; 
 
-    // meshes
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
-    UStaticMeshComponent* DoorMesh = nullptr;
-
-    // collision
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
-    UBoxComponent* DoorCollision = nullptr;
-
     // Animation
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Timeline", meta = (AllowPrivateAccess = "true"))
-    UCurveFloat* DoorCurve; 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Timeline", meta = (AllowPrivateAccess = "true"))
+    UCurveFloat* DoorCurve;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Timeline", meta = (AllowPrivateAccess = "true"))
     float OpenAngle = 135.0f;
@@ -61,6 +55,9 @@ protected:
     void TimelineFinished();
 
 private:
+    UStaticMeshComponent* DoorMesh = nullptr;
+    UBoxComponent* DoorCollision = nullptr;
+
     FRotator ClosedRotation;
     FRotator OpenRotation;
 

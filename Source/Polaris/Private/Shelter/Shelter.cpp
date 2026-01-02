@@ -52,13 +52,16 @@ void AShelter::InitializeComponents()
 
     BedMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BedMesh"));
     BedMesh->SetupAttachment(BedComponent);
+
+    DoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
+    DoorMesh->SetupAttachment(ShelterDoor);
 }
 
 void AShelter::ConfigureMeshes()
 {
     if (ShelterMesh)
     {
-        ShelterMesh->SetMobility(EComponentMobility::Static);
+        ShelterMesh->SetMobility(EComponentMobility::Movable);
         ShelterMesh->SetCollisionProfileName(TEXT("BlockAll"));
         ShelterMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
         ShelterMesh->SetGenerateOverlapEvents(false);
@@ -66,23 +69,31 @@ void AShelter::ConfigureMeshes()
 
     if (FloorMesh)
     {
-        FloorMesh->SetMobility(EComponentMobility::Static);
+        FloorMesh->SetMobility(EComponentMobility::Movable);
         FloorMesh->SetCollisionProfileName(TEXT("BlockAll"));
         FloorMesh->SetGenerateOverlapEvents(false);
     }
 
     if (FuelTankMesh)
     {
-        FuelTankMesh->SetMobility(EComponentMobility::Static);
+        FuelTankMesh->SetMobility(EComponentMobility::Movable);
         FuelTankMesh->SetCollisionProfileName(TEXT("BlockAll"));
         FuelTankMesh->SetGenerateOverlapEvents(false);
     }
 
     if (BedMesh)
     {
-        BedMesh->SetMobility(EComponentMobility::Static);
+        BedMesh->SetMobility(EComponentMobility::Movable);
         BedMesh->SetCollisionProfileName(TEXT("BlockAll"));
         BedMesh->SetGenerateOverlapEvents(false);
+    }
+
+    if (DoorMesh)
+    {
+        DoorMesh->SetMobility(EComponentMobility::Movable);
+        DoorMesh->SetCollisionProfileName(TEXT("BlockAll"));
+        DoorMesh->SetGenerateOverlapEvents(false);
+        ShelterDoor->SetDoorMesh(DoorMesh);
     }
 }
 
@@ -116,17 +127,39 @@ void AShelter::ConfigureCollisions()
         BedCollision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
         BedCollision->SetGenerateOverlapEvents(true);
     }
+
+    DoorCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("DoorCollision"));
+    if (DoorCollision)
+    {
+        DoorCollision->SetupAttachment(DoorMesh);
+        DoorCollision->SetBoxExtent(FVector(32.f, 8.f, 64.f));
+        DoorCollision->SetCollisionProfileName(TEXT("NoCollision"));
+        DoorCollision->SetGenerateOverlapEvents(true);
+        ShelterDoor->SetDoorCollision(DoorCollision);
+    }
 }
 
 void AShelter::BindDelegates()
 {
-    // Setup Fuel Tank collision overlaps
+    // Setup Bed collision overlaps
+    if (BedCollision && BedComponent)
+    {
+        BedCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        BedCollision->SetGenerateOverlapEvents(true);
+        BedCollision->OnComponentBeginOverlap.AddDynamic(BedComponent, &UBedComponent::OnBedBeginOverlap);
+        BedCollision->OnComponentEndOverlap.AddDynamic(BedComponent, &UBedComponent::OnBedEndOverlap);
+    }
+
+    // Setup Fuel Tank collision overlaps and fuel state change delegate
     if (FuelTankCollision && FuelComponent)
     {
         FuelTankCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
         FuelTankCollision->SetGenerateOverlapEvents(true);
         FuelTankCollision->OnComponentBeginOverlap.AddDynamic(FuelComponent, &UShelterFuelComponent::OnFuelTankBeginOverlap);
         FuelTankCollision->OnComponentEndOverlap.AddDynamic(FuelComponent, &UShelterFuelComponent::OnFuelTankEndOverlap);
+        FuelComponent->OnFuelStateChanged.AddDynamic(this, &AShelter::OnFuelStateChanged);
+
+        OnFuelStateChanged(FuelComponent->Fuel > 0.0f);
     }
 }
 

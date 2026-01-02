@@ -8,19 +8,6 @@ UShelterDoor::UShelterDoor()
 {
     // Create components
     DoorTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DoorTimeline"));
-
-    // Meshes
-    DoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
-    DoorMesh->SetupAttachment(this);
-    DoorMesh->SetMobility(EComponentMobility::Movable);
-    DoorMesh->SetCollisionProfileName(TEXT("NoCollision"));
-
-    // Collision
-    DoorCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("DoorCollision"));
-    DoorCollision->SetupAttachment(DoorMesh);
-    DoorCollision->SetBoxExtent(FVector(32.f, 8.f, 64.f));
-    DoorCollision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-    DoorCollision->SetGenerateOverlapEvents(true);
 }
 
 // Called when the game starts or when spawned
@@ -33,18 +20,7 @@ void UShelterDoor::BeginPlay()
         OpenRotation = ClosedRotation + FRotator(0.f, OpenAngle, 0.f);
     }
 
-    if (DoorCurve && DoorTimeline)
-    {
-        FOnTimelineFloat Progress;
-        Progress.BindUFunction(this, FName("TimelineProgress"));
-        DoorTimeline->AddInterpFloat(DoorCurve, Progress);
-
-        FOnTimelineEvent FinishedEvent;
-        FinishedEvent.BindUFunction(this, FName("TimelineFinished"));
-        DoorTimeline->SetTimelineFinishedFunc(FinishedEvent);
-
-        DoorTimeline->SetLooping(false);
-    }
+    InitializeTimeline(DoorTimeline);
 }
 
 void UShelterDoor::InitializeTimeline(UTimelineComponent* InTimeline)

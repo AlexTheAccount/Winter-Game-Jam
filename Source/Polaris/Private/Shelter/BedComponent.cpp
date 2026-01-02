@@ -5,6 +5,7 @@
 #include "Camera/PlayerCameraManager.h"
 #include <FoodWater.h>
 #include "EngineUtils.h"
+#include "Player/PolarisPlayerController.h"
 
 // Sets default values for this component's properties
 UBedComponent::UBedComponent()
@@ -93,6 +94,22 @@ void UBedComponent::StartSleeping(APlayerController* PlayerController, float Hou
         }, 0.65f, false);
 
     }, FadeOutTime, false);
+}
+
+void UBedComponent::OnBedBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+    // Check if the hit actor is the player and start sleeping
+    APawn* Pawn = Cast<APawn>(OtherActor);
+    if (Pawn && Pawn->GetController() && Pawn->GetController()->IsA(APolarisPlayerController::StaticClass()))
+    {
+        UE_LOG(LogTemp, Log, TEXT("Bed was hit by %s"), *OtherActor->GetName());
+        StartSleeping(Cast<APlayerController>(Pawn->GetController()), 8.0f); // Sleep for 8 hours as a temp value
+    }
+}
+
+void UBedComponent::OnBedEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+    // Currently no action needed on end overlap
 }
 
 // Called every frame

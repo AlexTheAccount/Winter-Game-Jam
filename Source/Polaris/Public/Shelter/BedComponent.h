@@ -20,6 +20,15 @@ public:
 
     void StartSleeping(APlayerController* PlayerController, float HoursToSleep);
 
+    UFUNCTION()
+    void OnBedBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+        bool bFromSweep, const FHitResult& SweepResult);
+
+    UFUNCTION()
+    void OnBedEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
