@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "UI/SettingsMenu.h"
+#include "UI/UIManager.h"
 
 #include "Components/Slider.h"
 #include "Components/ComboBoxString.h"
@@ -35,7 +36,38 @@ void USettingsMenu::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    // Bind audio sliders
+    // Wire delegates and UI setup
+    BindWidgetEvents();
+    PopulateVideoOptions();
+    SetupInputBindings();
+
+    // Load current settings into widgets
+    LoadSettingsIntoWidgets();
+}
+
+void USettingsMenu::NativeDestruct()
+{
+    // Unbind events and cleanup
+    UnbindWidgetEvents();
+    CleanupRebindRows();
+
+    // Flush config changes
+    if (GConfig)
+    {
+        GConfig->Flush(false, GGameIni);
+    }
+
+    Super::NativeDestruct();
+}
+
+void USettingsMenu::BindWidgetEvents()
+{
+    if (BackButton)
+    {
+        BackButton->OnClicked.AddDynamic(this, &USettingsMenu::OnBackClicked);
+    }
+
+    // Audio sliders
     if (MasterVolumeSlider)
     {
         MasterVolumeSlider->OnValueChanged.AddDynamic(this, &USettingsMenu::OnMasterVolumeChanged);
@@ -49,7 +81,7 @@ void USettingsMenu::NativeConstruct()
         MusicVolumeSlider->OnValueChanged.AddDynamic(this, &USettingsMenu::OnMusicVolumeChanged);
     }
 
-    // Bind video widgets
+    // Video widgets
     if (ResolutionCombo)
     {
         ResolutionCombo->OnSelectionChanged.AddDynamic(this, &USettingsMenu::OnResolutionChanged);
@@ -67,80 +99,20 @@ void USettingsMenu::NativeConstruct()
         BrightnessSlider->OnValueChanged.AddDynamic(this, &USettingsMenu::OnBrightnessChanged);
     }
 
-    // Bind reset defaults
+    // Reset defaults
     if (ResetDefaultsButton)
     {
         ResetDefaultsButton->OnClicked.AddDynamic(this, &USettingsMenu::OnResetToDefaultsClicked);
     }
-
-    // Populate resolution
-    if (ResolutionCombo && ResolutionCombo->GetOptionCount() == 0)
-    {
-        ResolutionCombo->AddOption(TEXT("1920x1080"));
-        ResolutionCombo->AddOption(TEXT("1600x900"));
-        ResolutionCombo->AddOption(TEXT("1280x720"));
-    }
-
-    // Populate window mode
-    if (WindowModeCombo && WindowModeCombo->GetOptionCount() == 0)
-    {
-        WindowModeCombo->AddOption(TEXT("Fullscreen"));
-        WindowModeCombo->AddOption(TEXT("Windowed"));
-        WindowModeCombo->AddOption(TEXT("Borderless"));
-    }
-
-    // Populate input bindings
-    RebindButtons.Empty();
-    RebindKeyLabels.Empty();
-
-    if (InputBindingsContainer)
-    {
-        InputBindingsContainer->ClearChildren();
-
-        for (const FName& Action : ActionsToExpose)
-        {
-            // create a horizontal layout row
-            UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
-
-            // Label
-            UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-            Label->SetText(FText::FromName(Action));
-            UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(Label);
-            if (LabelSlot) LabelSlot->SetPadding(FMargin(6.0f, 2.0f));
-
-            // Current key label
-            UTextBlock* KeyText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-            KeyText->SetText(FText::FromString(TEXT("...")));
-            UHorizontalBoxSlot* KeySlot = Row->AddChildToHorizontalBox(KeyText);
-            if (KeySlot) KeySlot->SetPadding(FMargin(6.0f, 2.0f));
-
-            // Rebind button
-            UButton* RebindButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
-            UTextBlock* ButtonText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-            ButtonText->SetText(FText::FromString(TEXT("Rebind")));
-            RebindButton->AddChild(ButtonText);
-            UHorizontalBoxSlot* ButtonSlot = Row->AddChildToHorizontalBox(RebindButton);
-            if (ButtonSlot) ButtonSlot->SetPadding(FMargin(6.0f, 2.0f));
-
-            // Bind click event for rebind
-            RebindButton->OnClicked.AddDynamic(this, &USettingsMenu::OnRebindButtonClicked);
-
-            // Store references for later
-            RebindButtons.Add(RebindButton);
-            RebindKeyLabels.Add(KeyText);
-
-            // Add row to container for input bindings
-            InputBindingsContainer->AddChild(Row);
-        }
-    }
-
-    // Load current settings into widgets
-    LoadSettingsIntoWidgets();
 }
 
-void USettingsMenu::NativeDestruct()
+void USettingsMenu::UnbindWidgetEvents()
 {
-    // Unbind
+    if (BackButton)
+    {
+        BackButton->OnClicked.RemoveDynamic(this, &USettingsMenu::OnBackClicked);
+    }
+
     if (MasterVolumeSlider) MasterVolumeSlider->OnValueChanged.RemoveDynamic(this, &USettingsMenu::OnMasterVolumeChanged);
     if (SFXVolumeSlider) SFXVolumeSlider->OnValueChanged.RemoveDynamic(this, &USettingsMenu::OnSFXVolumeChanged);
     if (MusicVolumeSlider) MusicVolumeSlider->OnValueChanged.RemoveDynamic(this, &USettingsMenu::OnMusicVolumeChanged);
@@ -150,6 +122,98 @@ void USettingsMenu::NativeDestruct()
     if (VSyncCheckBox) VSyncCheckBox->OnCheckStateChanged.RemoveDynamic(this, &USettingsMenu::OnVSyncChanged);
     if (BrightnessSlider) BrightnessSlider->OnValueChanged.RemoveDynamic(this, &USettingsMenu::OnBrightnessChanged);
 
+    if (ResetDefaultsButton) ResetDefaultsButton->OnClicked.RemoveDynamic(this, &USettingsMenu::OnResetToDefaultsClicked);
+}
+
+void USettingsMenu::PopulateVideoOptions()
+{
+    if (ResolutionCombo && ResolutionCombo->GetOptionCount() == 0)
+    {
+        ResolutionCombo->AddOption(TEXT("1920x1080"));
+        ResolutionCombo->AddOption(TEXT("1600x900"));
+        ResolutionCombo->AddOption(TEXT("1280x720"));
+    }
+
+    if (WindowModeCombo && WindowModeCombo->GetOptionCount() == 0)
+    {
+        WindowModeCombo->AddOption(TEXT("Fullscreen"));
+        WindowModeCombo->AddOption(TEXT("Windowed"));
+        WindowModeCombo->AddOption(TEXT("Borderless"));
+    }
+}
+
+void USettingsMenu::SetupInputBindings()
+{
+    RebindButtons.Empty();
+    RebindKeyLabels.Empty();
+
+    if (InputBindingsContainer)
+    {
+        InputBindingsContainer->ClearChildren();
+
+        for (const FName& Action : ActionsToExpose)
+        {
+            UTextBlock* KeyLabel = nullptr;
+            UButton* RebindBtn = nullptr;
+            UHorizontalBox* Row = CreateInputBindingRow(Action, KeyLabel, RebindBtn);
+
+            if (Row)
+            {
+                InputBindingsContainer->AddChild(Row);
+            }
+
+            if (RebindBtn)
+            {
+                RebindBtn->OnClicked.AddDynamic(this, &USettingsMenu::OnRebindButtonClicked);
+                RebindButtons.Add(RebindBtn);
+            }
+
+            if (KeyLabel)
+            {
+                RebindKeyLabels.Add(KeyLabel);
+            }
+        }
+    }
+}
+
+UHorizontalBox* USettingsMenu::CreateInputBindingRow(const FName& ActionName, UTextBlock*& OutKeyLabel, UButton*& OutButton)
+{
+    OutKeyLabel = nullptr;
+    OutButton = nullptr;
+
+    if (WidgetTree == nullptr) return nullptr;
+
+    // create a horizontal layout row
+    UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+    if (Row == nullptr) return nullptr;
+
+    // Label
+    UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    Label->SetText(FText::FromName(ActionName));
+    UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(Label);
+    if (LabelSlot) LabelSlot->SetPadding(FMargin(6.0f, 2.0f));
+
+    // Current key label
+    UTextBlock* KeyText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    KeyText->SetText(FText::FromString(TEXT("...")));
+    UHorizontalBoxSlot* KeySlot = Row->AddChildToHorizontalBox(KeyText);
+    if (KeySlot) KeySlot->SetPadding(FMargin(6.0f, 2.0f));
+    OutKeyLabel = KeyText;
+
+    // Rebind button
+    UButton* RebindButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+    UTextBlock* ButtonText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    ButtonText->SetText(FText::FromString(TEXT("Rebind")));
+    RebindButton->AddChild(ButtonText);
+    UHorizontalBoxSlot* ButtonSlot = Row->AddChildToHorizontalBox(RebindButton);
+    if (ButtonSlot) ButtonSlot->SetPadding(FMargin(6.0f, 2.0f));
+    OutButton = RebindButton;
+
+    return Row;
+}
+
+void USettingsMenu::CleanupRebindRows()
+{
     // Unbind the row rebind buttons
     for (UButton* Button : RebindButtons)
     {
@@ -160,14 +224,34 @@ void USettingsMenu::NativeDestruct()
     }
     RebindButtons.Empty();
     RebindKeyLabels.Empty();
+}
 
-    // Flush config changes
-    if (GConfig)
+void USettingsMenu::OnBackClicked()
+{
+    // If a rebind was in progress, cancel it and clear keyboard focus
+    if (bAwaitingRebind)
     {
-        GConfig->Flush(false, GGameIni);
+        bAwaitingRebind = false;
+        PendingRebindAction = NAME_None;
+        if (TSharedPtr<SWidget> SlateWidget = TakeWidget())
+        {
+            FSlateApplication::Get().ClearKeyboardFocus(EFocusCause::Cleared);
+        }
     }
 
-    Super::NativeDestruct();
+    // use UIManager to hide settings
+    if (UWorld* World = GetWorld())
+    {
+        if (UGameInstance* GI = World->GetGameInstance())
+        {
+            if (UUIManager* Manager = Cast<UUIManager>(GI))
+            {
+                Manager->HideSettings();
+            }
+        }
+    }
+
+    RemoveFromParent();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////// Audio 
@@ -435,38 +519,8 @@ void USettingsMenu::OnResetToDefaultsClicked()
         GConfig->Flush(false, GGameIni);
     }
 
-    // restore default input mappings
-    APlayerController* PC = GetOwningPlayer();
-    if (PC)
-    {
-        ULocalPlayer* LP = PC->GetLocalPlayer();
-        if (LP)
-        {
-            UEnhancedInputLocalPlayerSubsystem* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-            if (Subsystem)
-            {
-                // Remove duplicated runtime contexts
-                for (const auto& Pair : RuntimeMappingDuplicates)
-                {
-                    UInputMappingContext* Context = Pair.Value.Get();
-                    if (Context)
-                    {
-                        Subsystem->RemoveMappingContext(Context);
-                    }
-                }
-                RuntimeMappingDuplicates.Empty();
-
-                // Re-add the exposed mapping contexts if available
-                for (UInputMappingContext* Ctx : ExposedMappingContexts)
-                {
-                    if (Ctx)
-                    {
-                        Subsystem->AddMappingContext(Ctx, 0);
-                    }
-                }
-            }
-        }
-    }
+    // restore default input mappings and runtime contexts
+    RestoreDefaultInputMappings();
 
     // restore default video settings
     if (GEngine)
@@ -491,6 +545,41 @@ void USettingsMenu::OnResetToDefaultsClicked()
 
     // Refresh UI to reflect defaults
     LoadSettingsIntoWidgets();
+}
+
+void USettingsMenu::RestoreDefaultInputMappings()
+{
+    APlayerController* PC = GetOwningPlayer();
+    if (PC)
+    {
+        ULocalPlayer* LP = PC->GetLocalPlayer();
+        if (LP)
+        {
+            UEnhancedInputLocalPlayerSubsystem* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+            if (Subsystem)
+            {
+                // Remove duplicated runtime contexts
+                for (const auto& Pair : RuntimeMappingDuplicates)
+                {
+                    UInputMappingContext* Context = Pair.Value.Get();
+                    if (Context)
+                    {
+                        Subsystem->RemoveMappingContext(Context);
+                    }
+                }
+                RuntimeMappingDuplicates.Empty();
+
+                // Re-add the exposed mapping contexts if available
+                for (UInputMappingContext* Context : ExposedMappingContexts)
+                {
+                    if (Context)
+                    {
+                        Subsystem->AddMappingContext(Context, 0);
+                    }
+                }
+            }
+        }
+    }
 }
 
 void USettingsMenu::LoadSettingsIntoWidgets()

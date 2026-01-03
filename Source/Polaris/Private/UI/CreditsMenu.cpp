@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "UI/CreditsMenu.h"
+#include <UI/UIManager.h>
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
 
@@ -27,6 +28,17 @@ void UCreditsMenu::NativeDestruct()
 }
 void UCreditsMenu::OnBackClicked()
 {
+    if (UWorld* World = GetWorld())
+    {
+        if (UGameInstance* GI = World->GetGameInstance())
+        {
+            if (UUIManager* Manager = Cast<UUIManager>(GI))
+            {
+                Manager->ShowMainMenu();
+            }
+        }
+    }
+
     RemoveFromParent();
 }
 

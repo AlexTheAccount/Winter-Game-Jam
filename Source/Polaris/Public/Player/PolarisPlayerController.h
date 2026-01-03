@@ -33,6 +33,10 @@ protected:
 	TObjectPtr<UInputAction> LookAction;
 	UPROPERTY(EditDefaultsOnly, Category = "Polaris|Input|Movement")
 	TObjectPtr<UInputAction> JumpAction;
+    UPROPERTY(EditDefaultsOnly, Category = "Polaris|Input|Movement")
+    TObjectPtr<UInputAction> PauseAction;
+    UPROPERTY(EditDefaultsOnly, Category = "Polaris|Input|Movement")
+    TObjectPtr<UInputAction> InteractAction;
 
 	UPROPERTY(EditAnywhere, Category = "Polaris|Input|Movement");
 	float YSensitivity = 0.1f;
@@ -44,4 +48,6 @@ protected:
 	void Look(const FInputActionValue& Value);
 	void Jump();
 	void StopJumping();
+    void OnPausePressed();
+    void OnInteractPressed();
 };

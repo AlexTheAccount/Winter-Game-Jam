@@ -1,11 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "UI/MainMenu.h"
+#include "UI/UIManager.h"
 #include "Components/Button.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/GameInstance.h"
-#include "UI/UIManager.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 void UMainMenu::NativeConstruct()
 {
@@ -25,6 +26,11 @@ void UMainMenu::NativeConstruct()
     if (CreditsButton)
     {
         CreditsButton->OnClicked.AddDynamic(this, &UMainMenu::OnCreditsClicked);
+    }
+
+    if (ExitButton)
+    {
+        ExitButton->OnClicked.AddDynamic(this, &UMainMenu::OnExitClicked);
     }
 }
 
@@ -46,6 +52,11 @@ void UMainMenu::NativeDestruct()
         CreditsButton->OnClicked.RemoveDynamic(this, &UMainMenu::OnCreditsClicked);
     }
 
+    if (ExitButton)
+    {
+        ExitButton->OnClicked.RemoveDynamic(this, &UMainMenu::OnExitClicked);
+    }
+
     Super::NativeDestruct();
 }
 
@@ -54,33 +65,17 @@ void UMainMenu::OnStartClicked()
     // If a start level is specified, load that level
     if (StartLevelName != NAME_None)
     {
+        UE_LOG(LogTemp, Log, TEXT("Opening level %s"), *StartLevelName.ToString());
+
         UGameplayStatics::OpenLevel(this, StartLevelName);
-        return;
     }
-
-    // Otherwise, hide the main menu via UIManager
-    if (UWorld* World = GetWorld())
-    {
-        if (UGameInstance* GI = World->GetGameInstance())
-        {
-            if (UUIManager* Manager = Cast<UUIManager>(GI))
-            {
-                Manager->HideMainMenu();
-            }
-        }
-    }
-
-    // Set input mode back to game only and hide mouse cursor
-    if (APlayerController* PC = GetOwningPlayer())
-    {
-        PC->bShowMouseCursor = false;
-        FInputModeGameOnly InputMode;
-        PC->SetInputMode(InputMode);
-    }
+    else
+        UE_LOG(LogTemp, Warning, TEXT("StartLevelName is not set in UMainMenu::OnStartClicked"));
 }
 
 void UMainMenu::OnSettingsClicked()
 {
+    // show settings
     if (UWorld* World = GetWorld())
     {
         if (UGameInstance* GI = World->GetGameInstance())
@@ -95,6 +90,7 @@ void UMainMenu::OnSettingsClicked()
 
 void UMainMenu::OnCreditsClicked()
 {
+    // show credits
     if (UWorld* World = GetWorld())
     {
         if (UGameInstance* GI = World->GetGameInstance())
@@ -105,4 +101,28 @@ void UMainMenu::OnCreditsClicked()
             }
         }
     }
+}
+
+void UMainMenu::OnExitClicked()
+{
+    // Hide the main menu
+    if (UWorld* World = GetWorld())
+    {
+        if (UGameInstance* GI = World->GetGameInstance())
+        {
+            if (UUIManager* Manager = Cast<UUIManager>(GI))
+            {
+                Manager->HideMainMenu();
+            }
+        }
+    }
+
+    // quit game
+    if (APlayerController* PC = GetOwningPlayer())
+    {
+        UKismetSystemLibrary::QuitGame(this, PC, EQuitPreference::Quit, true);
+    }
+    else    
+        UE_LOG(LogTemp, Warning, TEXT("PC not found in UMainMenu::OnExitClicked"));
+
 }

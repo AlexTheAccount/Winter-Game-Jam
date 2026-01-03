@@ -5,6 +5,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "Polaris/Public/Characters/PolarisFPSCharacter.h"
+#include "UI/UIManager.h"
 
 void APolarisPlayerController::BeginPlay()
 {
@@ -29,7 +30,9 @@ void APolarisPlayerController::SetupInputComponent()
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::Jump);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ThisClass::StopJumping);
-	
+    EnhancedInputComponent->BindAction(PauseAction, ETriggerEvent::Triggered, this, &ThisClass::OnPausePressed);
+    EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ThisClass::OnInteractPressed);
+
 }
 
 void APolarisPlayerController::Move(const FInputActionValue& Value)
@@ -59,4 +62,24 @@ void APolarisPlayerController::Jump()
 void APolarisPlayerController::StopJumping()
 {
 	GetCharacter()->StopJumping();
+}
+
+void APolarisPlayerController::OnPausePressed()
+{
+    if (UGameInstance* GI = GetGameInstance())
+    {
+        if (UUIManager* UIManager = Cast<UUIManager>(GI))
+        {
+            UIManager->SetPauseState(false);
+            UIManager->TogglePause();
+        }
+    }
+}
+
+void APolarisPlayerController::OnInteractPressed()
+{
+    if (APolarisFPSCharacter* FPSCharacter = Cast<APolarisFPSCharacter>(GetCharacter()))
+    {
+        //FPSCharacter->Interact();
+    }
 }

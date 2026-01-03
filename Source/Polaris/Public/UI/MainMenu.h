@@ -27,6 +27,9 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MainMenu", meta = (BindWidget))
     UButton* CreditsButton = nullptr;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MainMenu", meta = (BindWidget))
+    UButton* ExitButton = nullptr;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MainMenu")
     FName StartLevelName = EName::None;
 
@@ -39,4 +42,7 @@ protected:
 
     UFUNCTION()
     void OnCreditsClicked();
+
+    UFUNCTION()
+    void OnExitClicked();
 };

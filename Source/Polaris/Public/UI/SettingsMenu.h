@@ -13,6 +13,7 @@ class UCheckBox;
 class UVerticalBox;
 class UButton;
 class UTextBlock;
+class UHorizontalBox;
 
 UCLASS()
 class POLARIS_API USettingsMenu : public UUserWidget
@@ -24,7 +25,10 @@ public:
     virtual void NativeDestruct() override;
 
 protected:
-    // Input Mapping Context to expose for rebinding
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta = (BindWidget))
+    UButton* BackButton = nullptr;
+
+    // Input Mapping Context for rebinding
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
     TArray<UInputMappingContext*> ExposedMappingContexts;
 
@@ -60,6 +64,9 @@ protected:
 
     // Handlers
     UFUNCTION()
+    void OnBackClicked();
+
+    UFUNCTION()
     void OnMasterVolumeChanged(float Value);
 
     UFUNCTION()
@@ -92,7 +99,16 @@ protected:
     void OnResetToDefaultsClicked();
 
 private:
-    // Helpers
+    // Helpers for wiring and lifecycle
+    void BindWidgetEvents();
+    void UnbindWidgetEvents();
+    void PopulateVideoOptions();
+    void SetupInputBindings();
+    void CleanupRebindRows();
+    UHorizontalBox* CreateInputBindingRow(const FName& ActionName, UTextBlock*& OutKeyLabel, UButton*& OutButton);
+    void RestoreDefaultInputMappings();
+
+    // Core helpers
     bool ApplyRebindToMappingContext(UInputMappingContext* SourceContext, FName ActionName, const FKey& NewKey, int32 PriorityValue = 0);
     void LoadSettingsIntoWidgets();
     void SaveAudioToConfig(const FString& Key, float Value);
